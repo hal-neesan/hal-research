@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>試用アンケート | Halねえさんの乗務手帳（リサーチ版）</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: sans-serif; margin: 0; padding: 16px; line-height: 1.6; }
+  main { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 20px; margin: 8px 0 4px; }
+  .sub { font-size: 13px; opacity: .75; margin: 0 0 16px; }
+  a.back { display: inline-block; margin-bottom: 12px; }
+  fieldset { border: 1px solid #8884; border-radius: 10px; padding: 12px; margin-bottom: 16px; }
+  legend { font-size: 15px; font-weight: bold; padding: 0 6px; }
+  label.choice { display: block; font-size: 16px; padding: 6px 0; }
+  label.choice input { margin-right: 8px; }
+  label.small { display: block; font-size: 13px; margin: 8px 0 4px; }
+  input[type="text"], textarea { width: 100%; box-sizing: border-box; font-size: 16px; padding: 8px; border-radius: 6px; border: 1px solid #8888; background: transparent; color: inherit; }
+  textarea { min-height: 90px; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; min-width: 0; }
+  button { margin-top: 12px; font-size: 16px; padding: 10px 20px; border-radius: 8px; border: 0; background: #2e7d32; color: #fff; width: 100%; }
+  button:disabled { opacity: .5; }
+  .msg { font-size: 14px; margin: 10px 0; }
+  .done { border: 1px solid #8884; border-radius: 10px; padding: 16px; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="index.html">← アプリに戻る</a>
+  <h1>試用アンケート（所要1分）</h1>
+  <p class="sub">「乗務手帳」を良くするための6問です。Q3とQ5だけでも大丈夫です。名前や連絡先は聞きません。回答は集計だけに使います。</p>
+
+  <form id="survey-form">
+    <fieldset>
+      <legend>Q1. 画面の大きな3つの数字（「目標まであと○○円」「残り1乗務あたり○○円」「1日あたり○○時間」）は、見て意味が分かりましたか？</legend>
+      <label class="choice"><input type="radio" name="q1" value="一目で分かった">一目で分かった</label>
+      <label class="choice"><input type="radio" name="q1" value="少し考えれば分かった">少し考えれば分かった</label>
+      <label class="choice"><input type="radio" name="q1" value="分かりにくかった">分かりにくかった</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Q2. 3つの数字のうち、乗務中や乗務前にいちばん見たいのはどれですか？</legend>
+      <label class="choice"><input type="radio" name="q2" value="目標まであと○○円">目標まであと○○円</label>
+      <label class="choice"><input type="radio" name="q2" value="残り1乗務あたり○○円">残り1乗務あたり○○円</label>
+      <label class="choice"><input type="radio" name="q2" value="1日あたり○○時間">1日あたり○○時間</label>
+      <label class="choice"><input type="radio" name="q2" value="どれも見ない">どれも見ない</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>Q3. 「休憩する」「休憩おわり」のボタンは必要ですか？</legend>
+      <label class="choice"><input type="radio" name="q3" value="必要（毎回押せそう）">必要（毎回押せそう）</label>
+      <label class="choice"><input type="radio" name="q3" value="あれば使うかも">あれば使うかも</label>
+      <label class="choice"><input type="radio" name="q3" value="いらない（会社の記録で足りる）">いらない（会社の記録で足りる）</label>
+      <label class="small" for="q3_reason">「いらない」の方は、理由を一言（例：デジタコに残るから、押すのが面倒だから）</label>
+      <input type="text" id="q3_reason" maxlength="200" autocomplete="off">
+    </fieldset>
+
+    <fieldset>
+      <legend>Q4. 帰庫のとき、売上を入力する手間はどう感じましたか？</legend>
+      <label class="choice"><input type="radio" name="q4" value="苦にならない">苦にならない</label>
+      <label class="choice"><input type="radio" name="q4" value="少し面倒">少し面倒</label>
+      <label class="choice"><input type="radio" name="q4" value="面倒で続かなそう">面倒で続かなそう</label>
+      <label class="small" for="q4_reason">「面倒」の方は、どこが面倒でしたか？</label>
+      <input type="text" id="q4_reason" maxlength="200" autocomplete="off">
+    </fieldset>
+
+    <fieldset>
+      <legend>Q5. あなたの会社の締め日は何日ですか？ 月の乗務日数や、会社独自の時間の基準（法令より厳しい社内ルール）はありますか？</legend>
+      <p style="font-size:13px;opacity:.75;margin:0 0 8px">会社名は書かなくて構いません。締め日と日数、社内基準の有無だけで十分です。</p>
+      <div class="row">
+        <div>
+          <label class="small" for="q5_closing">締め日</label>
+          <input type="text" id="q5_closing" maxlength="20" placeholder="例：15日／末日" autocomplete="off">
+        </div>
+        <div>
+          <label class="small" for="q5_days">乗務日数（月）</label>
+          <input type="text" id="q5_days" maxlength="10" placeholder="例：12" autocomplete="off" inputmode="numeric">
+        </div>
+      </div>
+      <label class="small">社内基準</label>
+      <label class="choice"><input type="radio" name="q5_rule" value="なし">なし</label>
+      <label class="choice"><input type="radio" name="q5_rule" value="あり">あり</label>
+      <label class="small" for="q5_rule_text">「あり」の方は、内容を一言</label>
+      <input type="text" id="q5_rule_text" maxlength="200" autocomplete="off">
+    </fieldset>
+
+    <fieldset>
+      <legend>Q6. 使ってみて、分かりにくかった点、足りない機能、あったら便利な機能があれば、自由にどうぞ。</legend>
+      <textarea id="q6" maxlength="1000"></textarea>
+    </fieldset>
+
+    <button type="submit" id="submit">回答を送る</button>
+    <p class="msg" id="form-msg"></p>
+  </form>
+
+  <div class="done" id="done" style="display:none">
+    <p>ありがとうございます。回答を受け取りました。</p>
+    <p><a href="board.html">掲示板を見る</a>　<a href="index.html">アプリに戻る</a></p>
+  </div>
+</main>
+<script>
+  var SB_URL = 'https://fffjfvoxjddsqnofclop.supabase.co';
+  var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZmpmdm94amRkc3Fub2ZjbG9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4ODA4MzQsImV4cCI6MjExMDQ1NjgzNH0.BEJNPdJNXBPoeyz-UU20MQ1OYDI1dq2mE7qh_guhgLg';
+
+  function radio(name) {
+    var els = document.getElementsByName(name);
+    for (var i = 0; i < els.length; i++) {
+      if (els[i].checked) return els[i].value;
+    }
+    return null;
+  }
+  function text(id) {
+    var v = document.getElementById(id).value.trim();
+    return v ? v : null;
+  }
+
+  document.getElementById('survey-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var btn = document.getElementById('submit');
+    var msg = document.getElementById('form-msg');
+    var payload = {
+      q1: radio('q1'),
+      q2: radio('q2'),
+      q3: radio('q3'),
+      q3_reason: text('q3_reason'),
+      q4: radio('q4'),
+      q4_reason: text('q4_reason'),
+      q5_closing: text('q5_closing'),
+      q5_days: text('q5_days'),
+      q5_rule: radio('q5_rule'),
+      q5_rule_text: text('q5_rule_text'),
+      q6: text('q6')
+    };
+    var answered = Object.keys(payload).some(function (k) { return payload[k] !== null; });
+    if (!answered) { msg.textContent = 'どれか1つでも答えてから送ってください。'; return; }
+    btn.disabled = true; msg.textContent = '送信中…';
+    fetch(SB_URL + '/rest/v1/surveys', {
+      method: 'POST',
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(payload)
+    }).then(function (r) {
+      btn.disabled = false;
+      if (r.ok) {
+        document.getElementById('survey-form').style.display = 'none';
+        document.getElementById('done').style.display = 'block';
+      } else {
+        msg.textContent = '送れませんでした。もう一度お試しください。';
+      }
+    }).catch(function () {
+      btn.disabled = false;
+      msg.textContent = '送れませんでした。電波の良いところでお試しください。';
+    });
+  });
+</script>
+</body>
+</html>
