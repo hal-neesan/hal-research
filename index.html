@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>売上・乗務管理</title>
+<title>Halねえさんの乗務手帳（リサーチ版）</title>
 <style>
-/* Base reset. The Artifact page in v1 got this from its host; a standalone file carries its own. */
+/* Base reset (standalone page). */
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 body { margin: 0; }
 img { max-width: 100%; }
@@ -84,7 +84,6 @@ button:focus-visible, input:focus-visible, select:focus-visible, .seg input:focu
 .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .period { font-family: var(--font-num); font-weight: 700; font-size: 20px; letter-spacing: .02em; line-height: 1.2; white-space: nowrap; }
 .period small { font-family: var(--font-body); font-size: 13px; color: var(--muted); font-weight: 500; margin-right: 6px; letter-spacing: 0; }
-.proto { font-family: var(--font-body); font-size: 12px; font-weight: 700; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; margin-left: 6px; letter-spacing: 0; vertical-align: 3px; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; }
 .chip { min-height: 44px; padding: 0 9px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); font-weight: 700; font-size: 15px; white-space: nowrap; }
 
@@ -211,6 +210,12 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
 .key { min-height: 72px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel2); font-family: var(--font-num); font-size: 36px; font-weight: 700; }
 .key:active { background: var(--line); }
 
+/* links to the board and the survey (bottom of the page) */
+.links { max-width: 480px; margin: 0 auto; padding: 18px 0 30px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.linkbtn { display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel2); color: var(--fg); text-decoration: none; font-weight: 700; font-size: 16px; }
+.flag { margin-left: 8px; background: #d32f2f; color: #fff; border-radius: 8px; padding: 1px 7px; font-size: 12px; font-weight: 700; }
+.links-note { flex-basis: 100%; margin: 2px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -241,7 +246,8 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
     } catch (e) { storageOk = false; }
     return defaults();
   }
-  /* Every change is saved in this browser (localStorage), stamped with updatedAt. */
+  /* Every change is saved in this browser (localStorage) and nowhere else; no record is ever sent to the operator.
+     updatedAt is kept only so the saved format stays the same as the prototype's. */
   function localSave() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storageOk = false; } }
   function save() { state.updatedAt = Date.now(); localSave(); }
 
@@ -410,7 +416,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
       '<div><small>乗務時間の残り</small><span class="v"><b id="a-time">' + ((M.limitMs - M.used) / HOUR).toFixed(1) + '</b><i>時間</i></span></div>' +
       '<div><small>今日の帰庫目標</small><span class="v"><b id="a-ret">' + returnHtml(M) + '</b></span></div></div>' +
       actionView(M) +
-      '<p class="foot">試作版 ・ ' + (storageOk ? '記録はこのスマホの中にだけ保存されます。間違えても、履歴から直せます。'
+      '<p class="foot">試用版 ・ ' + (storageOk ? '記録はこのスマホの中にだけ保存されます。間違えても、履歴から直せます。'
         : 'このブラウザでは記録を保存できません。閉じると消えます。') + '</p>';
   }
 
@@ -745,27 +751,34 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
   render();
 })();
 </script>
-<div style="text-align:center;padding:18px 0 30px">
-  <a href="board.html" style="display:inline-block;padding:10px 22px;border:1px solid #8888;border-radius:8px;color:inherit;text-decoration:none;font-size:15px">掲示板<span id="board-flag" style="display:none;background:#d32f2f;color:#fff;border-radius:8px;padding:1px 7px;margin-left:8px;font-size:12px">新着あり</span></a>
-  <a href="survey.html" style="display:inline-block;padding:10px 22px;border:1px solid #8888;border-radius:8px;color:inherit;text-decoration:none;font-size:15px;margin-left:8px">アンケート（1分）</a>
-  <div style="font-size:12px;opacity:.7;margin-top:6px">感想・質問は掲示板へ、6問の回答はアンケートへ</div>
-</div>
+<nav class="links" aria-label="掲示板とアンケート">
+  <a class="linkbtn" href="board.html">掲示板<span id="board-flag" class="flag" hidden>新着あり</span></a>
+  <a class="linkbtn" href="survey.html">アンケート（1分）</a>
+  <p class="links-note">感想・質問は掲示板へ、6問の回答はアンケートへ</p>
+</nav>
 <script>
+  /* New-post flag (spec section 5). This only asks the board for its newest post time; nothing is sent.
+     Section 9: if the request fails for any reason, show nothing and let the app run as usual. */
   (function () {
-    var SB_URL = 'https://fffjfvoxjddsqnofclop.supabase.co';
-    var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZmpmdm94amRkc3Fub2ZjbG9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4ODA4MzQsImV4cCI6MjExMDQ1NjgzNH0.BEJNPdJNXBPoeyz-UU20MQ1OYDI1dq2mE7qh_guhgLg';
-    fetch(SB_URL + '/rest/v1/posts?select=created_at&order=created_at.desc&limit=1', {
-      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
-    }).then(function (r) { return r.json(); }).then(function (rows) {
-      if (!rows || !rows.length) return;
-      var latest = rows[0].created_at;
-      var seen = null;
-      try { seen = localStorage.getItem('halBoardLastSeen'); } catch (e) {}
-      if (!seen || latest > seen) {
-        var f = document.getElementById('board-flag');
-        if (f) f.style.display = 'inline-block';
-      }
-    }).catch(function () {});
+    try {
+      var SB_URL = 'https://fffjfvoxjddsqnofclop.supabase.co';
+      var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZmpmdm94amRkc3Fub2ZjbG9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4ODA4MzQsImV4cCI6MjExMDQ1NjgzNH0.BEJNPdJNXBPoeyz-UU20MQ1OYDI1dq2mE7qh_guhgLg';
+      fetch(SB_URL + '/rest/v1/posts?select=created_at&order=created_at.desc&limit=1', {
+        headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY }
+      }).then(function (r) {
+        if (!r.ok) throw new Error('flag check failed');
+        return r.json();
+      }).then(function (rows) {
+        if (!Array.isArray(rows) || !rows.length) return;
+        var latest = rows[0].created_at;
+        var seen = null;
+        try { seen = localStorage.getItem('halBoardLastSeen'); } catch (e) {}
+        if (!seen || latest > seen) {
+          var f = document.getElementById('board-flag');
+          if (f) f.hidden = false;
+        }
+      }).catch(function () {});
+    } catch (e) {}
   })();
 </script>
 </body>
