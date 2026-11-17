@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>売上・乗務管理</title>
+<style>
+/* Base reset. The Artifact page in v1 got this from its host; a standalone file carries its own. */
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Noto+Sans+JP:wght@500;700;900&display=swap">
+<style>
+/* Layout: one 480px column. Three big readouts on top like a meter panel, the one action button at the thumb. Dark first. */
+:root {
+  --bg: #0b1219;
+  --panel: #141f2a;
+  --panel2: #1b2a38;
+  --line: #2b3d50;
+  --fg: #f2f6fa;
+  --muted: #9db0c3;
+  --go: #2fbf71;
+  --go-ink: #03210f;
+  --go-text: #5ee0a0;
+  --stop: #2f74dd;
+  --stop-ink: #ffffff;
+  --warn: #f5b82e;
+  --warn-ink: #241a00;
+  --warn-text: #f5c850;
+  --over: #ef4f4b;
+  --over-ink: #ffffff;
+  --over-text: #ff8a86;
+  --font-body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  --font-num: "Barlow Condensed", "Arial Narrow", "Noto Sans JP", sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef3f8; --panel: #ffffff; --panel2: #e4ecf4; --line: #c6d3e0;
+    --fg: #0d1a27; --muted: #4c6178;
+    --go: #1c9a58; --go-ink: #ffffff; --go-text: #0f7a40;
+    --stop: #2a66c8; --stop-ink: #ffffff;
+    --warn: #f1b21c; --warn-ink: #2a1d00; --warn-text: #8a5800;
+    --over: #d93a37; --over-ink: #ffffff; --over-text: #b3231f;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef3f8; --panel: #ffffff; --panel2: #e4ecf4; --line: #c6d3e0;
+  --fg: #0d1a27; --muted: #4c6178;
+  --go: #1c9a58; --go-ink: #ffffff; --go-text: #0f7a40;
+  --stop: #2a66c8; --stop-ink: #ffffff;
+  --warn: #f1b21c; --warn-ink: #2a1d00; --warn-text: #8a5800;
+  --over: #d93a37; --over-ink: #ffffff; --over-text: #b3231f;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.5;
+  padding-block: 12px 32px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-text-size-adjust: 100%;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, .seg input:focus-visible + span {
+  outline: 3px solid var(--warn); outline-offset: 2px;
+}
+.app { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.stack { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.muted { color: var(--muted); }
+
+/* top bar */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.period { font-family: var(--font-num); font-weight: 700; font-size: 20px; letter-spacing: .02em; line-height: 1.2; white-space: nowrap; }
+.period small { font-family: var(--font-body); font-size: 13px; color: var(--muted); font-weight: 500; margin-right: 6px; letter-spacing: 0; }
+.proto { font-family: var(--font-body); font-size: 12px; font-weight: 700; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; margin-left: 6px; letter-spacing: 0; vertical-align: 3px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { min-height: 44px; padding: 0 9px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); font-weight: 700; font-size: 15px; white-space: nowrap; }
+
+/* banners */
+.banner { border-radius: 12px; padding: 10px 14px; font-weight: 700; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.banner span { text-wrap: balance; min-width: 0; }
+.banner[data-k="warn"] { background: var(--warn); color: var(--warn-ink); }
+.banner[data-k="over"] { background: var(--over); color: var(--over-ink); }
+.banner[data-k="info"] { background: var(--panel2); border: 1px solid var(--line); }
+.banner button { min-height: 44px; padding: 0 16px; border-radius: 10px; border: 0; font-weight: 900; background: var(--fg); color: var(--bg); }
+
+/* the three readouts */
+.read { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 8px 16px 6px; }
+.read .lbl { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; color: var(--muted); }
+.lamp { width: 12px; height: 12px; border-radius: 50%; background: var(--go); flex: none; }
+.read .val { font-family: var(--font-num); font-weight: 800; font-size: clamp(44px, 13.5vw, 60px); line-height: 1.05; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--go-text); }
+.read .unit { font-family: var(--font-body); font-size: 22px; font-weight: 700; margin-left: 4px; }
+.read[data-s="warn"] .val { color: var(--warn-text); }
+.read[data-s="warn"] .lamp { background: var(--warn); }
+.read[data-s="over"] .val { color: var(--over-text); }
+.read[data-s="over"] .lamp { background: var(--over); }
+
+.aux { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.aux > div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; min-width: 0; }
+.aux small { display: block; font-size: 13px; color: var(--muted); font-weight: 700; line-height: 1.3; }
+.aux .v { white-space: nowrap; }
+.aux b { font-family: var(--font-num); font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.aux i { font-style: normal; font-size: 12px; color: var(--muted); margin-left: 1px; }
+
+/* buttons */
+.btn { display: block; width: 100%; min-height: 68px; border-radius: 16px; border: 0; font-size: 28px; font-weight: 900; letter-spacing: .04em; background: var(--panel2); color: var(--fg); }
+.btn.big { min-height: 92px; font-size: 36px; }
+.btn.go { background: var(--go); color: var(--go-ink); }
+.btn.stop { background: var(--stop); color: var(--stop-ink); }
+.btn.over { background: var(--over); color: var(--over-ink); }
+.btn.ghost { background: var(--panel2); color: var(--fg); border: 1px solid var(--line); }
+.btn.sm { min-height: 56px; font-size: 20px; }
+.btn[disabled] { opacity: .4; cursor: default; }
+.btn small { display: block; font-size: 14px; font-weight: 700; letter-spacing: 0; opacity: .85; line-height: 1.2; }
+
+/* on duty card */
+.duty { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+.duty-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.duty-nums small { display: block; font-size: 13px; color: var(--muted); font-weight: 700; }
+.duty-nums b { font-family: var(--font-num); font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.tag { display: inline-block; font-size: 13px; font-weight: 900; padding: 1px 8px; border-radius: 6px; background: var(--go); color: var(--go-ink); vertical-align: 2px; }
+.tag.warn { background: var(--warn); color: var(--warn-ink); }
+.rest-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+.rest-row .txt { min-width: 0; }
+.rest-row .txt b { font-family: var(--font-num); font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.rest-row .txt .left { display: block; font-size: 14px; color: var(--muted); font-weight: 700; }
+.rest-row .btn { width: auto; min-width: 150px; padding: 0 16px; }
+
+.foot { font-size: 13px; color: var(--muted); text-align: center; margin: 4px 0 0; }
+
+/* sub screens */
+.bar { display: flex; align-items: center; gap: 12px; }
+.bar h1 { font-size: 22px; margin: 0; font-weight: 900; }
+.note { color: var(--muted); font-size: 14px; margin: 0; }
+.form { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.f > span, .lab { font-weight: 700; font-size: 15px; }
+.f small { color: var(--muted); font-size: 13px; }
+.inl { display: flex; align-items: center; gap: 8px; }
+.inl em { font-style: normal; color: var(--muted); font-weight: 700; white-space: nowrap; }
+input[type="number"], input[type="datetime-local"], select {
+  width: 100%; min-height: 52px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); padding: 0 12px; font-size: 20px; font-weight: 700; min-width: 0;
+}
+input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabular-nums; font-size: 24px; }
+.seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.seg label { display: block; }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg span { display: flex; align-items: center; justify-content: center; min-height: 56px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg); font-weight: 900; font-size: 20px; }
+.seg input:checked + span { background: var(--go); border-color: var(--go); color: var(--go-ink); }
+.err { color: var(--over-text); font-weight: 700; margin: 0; min-height: 0; }
+.err:empty { display: none; }
+
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.nav .chip:disabled { opacity: .35; cursor: default; }
+.nav .lbl { font-family: var(--font-num); font-size: 22px; font-weight: 700; text-align: center; }
+.sum { display: grid; grid-template-columns: .7fr 1.35fr 1fr; gap: 8px; }
+.sum > div { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; min-width: 0; }
+.sum small { display: block; font-size: 13px; color: var(--muted); font-weight: 700; }
+.sum b { font-family: var(--font-num); font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.sum b i, .row .nw i { font-style: normal; font-family: var(--font-body); font-size: 13px; margin-left: 1px; }
+.nw { white-space: nowrap; }
+.rows { display: flex; flex-direction: column; gap: 8px; }
+.row { display: block; width: 100%; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; min-height: 64px; }
+.row .r1 { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.row .d { font-weight: 900; font-size: 18px; }
+.row .t { font-family: var(--font-num); font-size: 19px; font-weight: 600; color: var(--muted); }
+.row .amt { font-family: var(--font-num); font-size: 28px; font-weight: 800; color: var(--go-text); font-variant-numeric: tabular-nums; }
+.row .amt.none { font-family: var(--font-body); font-size: 15px; color: var(--warn-text); }
+.row .r2 { font-size: 14px; color: var(--muted); font-weight: 500; }
+.empty { background: var(--panel); border: 1px dashed var(--line); border-radius: 12px; padding: 18px 14px; color: var(--muted); }
+.csvbox { width: 100%; min-height: 120px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); padding: 10px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; }
+
+/* done */
+.done { text-align: center; display: flex; flex-direction: column; gap: 14px; padding-top: 24px; }
+.done .k { font-size: 18px; font-weight: 700; color: var(--muted); }
+.done .n { font-family: var(--font-num); font-size: clamp(64px, 22vw, 96px); font-weight: 800; color: var(--go-text); line-height: 1; font-variant-numeric: tabular-nums; }
+.done .n span { font-family: var(--font-body); font-size: 28px; margin-left: 6px; }
+.done .s { display: flex; justify-content: center; gap: 22px; flex-wrap: wrap; }
+.done .s div small { display: block; color: var(--muted); font-size: 14px; font-weight: 700; }
+.done .s div b { font-family: var(--font-num); font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.done .thanks { font-size: 24px; font-weight: 900; line-height: 1.5; margin: 6px 0 10px; text-wrap: balance; }
+
+/* overlays */
+.scrim { position: fixed; inset: 0; background: rgba(4, 8, 12, .62); display: flex; align-items: flex-end; justify-content: center; z-index: 30;
+  padding-left: max(0px, env(safe-area-inset-left, 0px)); padding-right: max(0px, env(safe-area-inset-right, 0px)); }
+.sheet { width: 100%; max-width: 480px; background: var(--panel); border: 1px solid var(--line); border-radius: 18px 18px 0 0; max-height: 92%; overflow: auto;
+  padding: 18px max(16px, env(safe-area-inset-left, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 12px; }
+.sheet h2 { margin: 0; font-size: 22px; font-weight: 900; }
+.sheet p { margin: 0; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.pad { position: fixed; inset: 0; background: var(--bg); z-index: 20; overflow: auto;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-left, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+.pad-in { max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+.pad-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pad-head b { font-size: 22px; font-weight: 900; }
+.pad-amt { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 8px 16px; text-align: right; font-family: var(--font-num); font-weight: 800; font-size: 72px; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--go-text); }
+.pad-amt span { font-family: var(--font-body); font-size: 26px; margin-left: 6px; }
+.keys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.key { min-height: 72px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel2); font-family: var(--font-num); font-size: 36px; font-weight: 700; }
+.key:active { background: var(--line); }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div id="app" class="app"></div>
+
+<script>
+(function () {
+  'use strict';
+  var HOUR = 3600000, MIN = 60000;
+  var WD = ['日', '月', '火', '水', '木', '金', '土'];
+  var PRESET = {
+    nikkin:    { label: '日勤', days: 21, limitH: 260, restH: 2, target: 1050000 },
+    yakin:     { label: '夜勤', days: 24, limitH: 280, restH: 2, target: 1200000 },
+    kakujitsu: { label: '隔日', days: 12, limitH: 240, restH: 3, target: 600000 }
+  };
+  var THEMES = { dark: 'ダーク', light: 'ライト', auto: '自動' };
+  var KEY = 'uriage-jomu-v1';
+  var storageOk = true;
+
+  function defaults() { return { v: 1, updatedAt: 0, closing: 15, theme: 'dark', records: [], periods: {}, lastCfg: null }; }
+  function load() {
+    try {
+      localStorage.setItem(KEY + '-t', '1'); localStorage.removeItem(KEY + '-t');
+      var t = localStorage.getItem(KEY);
+      if (t) { var o = JSON.parse(t); if (o && o.v === 1) return Object.assign(defaults(), o); }
+    } catch (e) { storageOk = false; }
+    return defaults();
+  }
+  /* Every change is saved in this browser (localStorage), stamped with updatedAt. */
+  function localSave() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storageOk = false; } }
+  function save() { state.updatedAt = Date.now(); localSave(); }
+
+  var state = load();
+  var ui = { screen: 'home', overlay: null, draft: null, histTs: Date.now(), doneId: null, csv: null };
+  var lastBanner = '';
+  var root = document.getElementById('app');
+
+
+  /* ---------- helpers ---------- */
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function md(ms) { var d = new Date(ms); return (d.getMonth() + 1) + '/' + d.getDate(); }
+  function clock(ms) { var d = new Date(ms); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function dtLocal(ms) { var d = new Date(ms); return ymd(d) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function yen(n) { return n == null ? '—' : Math.round(n).toLocaleString('ja-JP'); }
+  function hm(ms) {
+    var neg = ms < 0; var m = Math.floor(Math.abs(ms) / MIN);
+    return (neg ? '-' : '') + Math.floor(m / 60) + ':' + pad(m % 60);
+  }
+  function hmJa(ms) {
+    var m = Math.round(Math.max(0, ms) / MIN), h = Math.floor(m / 60), mm = m % 60;
+    return (h ? h + '時間' : '') + ((mm || !h) ? mm + '分' : '');
+  }
+  function sameDay(a, b) { return ymd(new Date(a)) === ymd(new Date(b)); }
+
+  /* ---------- periods (締め日で区切る) ---------- */
+  function periodFor(ms, closing) {
+    var c = closing == null ? state.closing : closing;
+    var d = new Date(ms), y = d.getFullYear(), m = d.getMonth(), s, e;
+    if (!c) { s = new Date(y, m, 1); e = new Date(y, m + 1, 1); }
+    else if (d.getDate() <= c) { s = new Date(y, m - 1, c + 1); e = new Date(y, m, c + 1); }
+    else { s = new Date(y, m, c + 1); e = new Date(y, m + 1, c + 1); }
+    return { s: s.getTime(), e: e.getTime(), key: ymd(s) };
+  }
+  function periodLabel(p) { return md(p.s) + '〜' + md(p.e - 1); }
+  function getCfg(key) {
+    var c = state.periods[key];
+    if (c) return { cfg: c, saved: true };
+    var b = state.lastCfg || Object.assign({ type: 'kakujitsu' }, PRESET.kakujitsu);
+    return { cfg: { type: b.type, days: b.days, limitH: b.limitH, restH: b.restH, target: b.target }, saved: false };
+  }
+
+  /* ---------- calculations ---------- */
+  function restMs(r, end) {
+    if (r.restOv != null) return r.restOv * MIN;
+    var t = 0, b = r.br || [];
+    for (var i = 0; i < b.length; i++) t += Math.max(0, (b[i].e == null ? end : b[i].e) - b[i].s);
+    return t;
+  }
+  function recM(r, now) {
+    var end = r.e == null ? now : r.e;
+    var kosoku = Math.max(0, end - r.s);
+    var rest = Math.min(kosoku, restMs(r, end));
+    var handle = kosoku - rest;
+    var ph = (r.sales != null && handle > 0) ? r.sales / (handle / HOUR) : null;
+    return { kosoku: kosoku, rest: rest, handle: handle, ph: ph };
+  }
+  function recsIn(per) { return state.records.filter(function (r) { return r.s >= per.s && r.s < per.e; }); }
+
+  function compute(now) {
+    var per = periodFor(now), g = getCfg(per.key), cfg = g.cfg;
+    var done = recsIn(per).filter(function (r) { return r.e != null; });
+    var sales = 0, kosoku = 0;
+    done.forEach(function (r) { sales += r.sales || 0; kosoku += recM(r, now).kosoku; });
+    var n = done.length;
+    var remainDays = Math.max(0, cfg.days - n);
+    var remainSales = Math.max(0, cfg.target - sales);
+    var perShift = remainDays > 0 ? remainSales / remainDays : null;
+    var limitMs = cfg.limitH * HOUR;
+    var remainLimit = limitMs - kosoku;
+    var perDay = remainDays > 0 ? Math.max(0, remainLimit) / remainDays : null;
+    var cur = state.records.find(function (r) { return r.e == null; }) || null;
+    var curInPer = !!cur && cur.s >= per.s && cur.s < per.e;
+    var used = kosoku + (curInPer ? Math.max(0, now - cur.s) : 0);
+    var st = used > limitMs ? 'over' : (used >= 0.9 * limitMs ? 'warn' : 'ok');
+    var targetReturn = cur ? cur.s + (perDay != null ? perDay : Math.max(0, remainLimit)) : null;
+    var pending = state.records.filter(function (r) { return r.e != null && r.sales == null; })
+      .sort(function (a, b) { return b.e - a.e; })[0] || null;
+    var onBreak = !!cur && cur.br && cur.br.length > 0 && cur.br[cur.br.length - 1].e == null;
+    var curRest = cur ? restMs(cur, now) : 0;
+    return {
+      now: now, per: per, cfg: cfg, saved: g.saved, n: n, sales: sales, kosoku: kosoku,
+      remainDays: remainDays, remainSales: remainSales, perShift: perShift, perDay: perDay,
+      limitMs: limitMs, remainLimit: remainLimit, cur: cur, curInPer: curInPer, used: used, st: st,
+      targetReturn: targetReturn, pending: pending, onBreak: onBreak, curRest: curRest,
+      reqRest: cfg.restH * HOUR
+    };
+  }
+
+  /* ---------- views ---------- */
+  function banners(M) {
+    var a = [];
+    if (M.st === 'over') a.push({ k: 'over', t: '拘束時間がリミットを ' + hmJa(M.used - M.limitMs) + ' 超えています' });
+    else if (M.st === 'warn') a.push({ k: 'warn', t: 'リミットまで あと ' + hmJa(M.limitMs - M.used) });
+    if (M.cur && M.targetReturn && M.now > M.targetReturn && M.st !== 'over') a.push({ k: 'warn', t: '今日の帰庫目標時刻を過ぎています' });
+    if (!M.saved) a.push({ k: 'info', t: '勤務形態と締め日を決める', act: 'go-setup', lab: '設定する' });
+    return a.slice(0, 2);
+  }
+  function bannerHtml(b) {
+    return '<div class="banner" data-k="' + b.k + '"><span>' + b.t + '</span>' +
+      (b.act ? '<button data-act="' + b.act + '">' + b.lab + '</button>' : '') + '</div>';
+  }
+  function tile(lbl, val, unit, s, id, valId) {
+    return '<section class="read" data-s="' + s + '"' + (id ? ' id="' + id + '"' : '') + '><div class="lbl"><i class="lamp" aria-hidden="true"></i>' + lbl +
+      '</div><div class="val"><span' + (valId ? ' id="' + valId + '"' : '') + '>' + val + '</span><span class="unit">' + unit + '</span></div></section>';
+  }
+  function returnText(M) {
+    if (!M.cur || !M.targetReturn) return '—';
+    return (sameDay(M.targetReturn, M.cur.s) ? '' : '翌') + clock(M.targetReturn);
+  }
+  /* the 翌 prefix stays small so the clock never wraps */
+  function returnHtml(M) { var t = returnText(M); return t.charAt(0) === '翌' ? '<i>翌</i>' + t.slice(1) : t; }
+  function restLeftText(M) {
+    var left = M.reqRest - M.curRest;
+    return left > 0 ? '規定まで あと ' + hm(left) : '規定の休憩をとりました';
+  }
+
+  function actionView(M) {
+    var h = '';
+    if (!M.cur) {
+      if (M.pending) {
+        h += '<div class="banner" data-k="info"><span>' + md(M.pending.e) + ' の売上が未入力です</span>' +
+          '<button data-act="pending-sales">入力する</button></div>';
+      }
+      h += '<button class="btn go big" data-act="start" aria-label="出庫（スタート）">出庫<small>スタート</small></button>';
+      return h;
+    }
+    var c = recM(M.cur, M.now);
+    h += '<section class="duty">' +
+      '<div><span class="tag">乗務中</span> <span class="muted">出庫 ' + clock(M.cur.s) + '</span></div>' +
+      '<div class="duty-nums">' +
+      '<div><small>拘束</small><b id="v-elapsed">' + hm(c.kosoku) + '</b></div>' +
+      '<div><small>ハンドル</small><b id="v-handle">' + hm(c.handle) + '</b></div>' +
+      '<div><small>休憩</small><b id="v-rest">' + hm(c.rest) + '</b></div></div>' +
+      '<div class="rest-row"><div class="txt">' +
+      (M.onBreak
+        ? '<span class="tag warn">休憩中</span> <b id="v-break">' + hm(M.now - M.cur.br[M.cur.br.length - 1].s) + '</b>'
+        : '<span class="left" id="v-restleft">' + restLeftText(M) + '</span>') +
+      '</div>' +
+      (M.onBreak
+        ? '<button class="btn go sm" data-act="break-end">休憩おわり</button>'
+        : '<button class="btn ghost sm" data-act="break-start">休憩する</button>') +
+      '</div></section>' +
+      '<button class="btn stop big" data-act="stop" aria-label="帰庫（ストップ）">帰庫<small>ストップ</small></button>';
+    return h;
+  }
+
+  function homeView(M) {
+    var bh = banners(M).map(bannerHtml).join('');
+    lastBanner = bh;
+    var perShiftTxt = M.perShift == null ? '—' : yen(Math.ceil(M.perShift));
+    var perDayTxt = M.perDay == null ? '—' : (M.perDay / HOUR).toFixed(1);
+    return '<header class="top"><div class="period"><small>今期</small>' + periodLabel(M.per) + '</div>' +
+      '<div class="chips"><button class="chip" data-act="theme" aria-label="画面の色を切り替える。いまは' + THEMES[state.theme] + '">' + THEMES[state.theme] + '</button>' +
+      '<button class="chip" data-act="go-history">履歴</button><button class="chip" data-act="go-setup">設定</button></div></header>' +
+      '<div id="banners" class="stack">' + bh + '</div>' +
+      '<div class="stack">' +
+      tile('目標まであと', yen(M.remainSales), '円', 'ok', '', 'v-remain') +
+      tile('残り1乗務あたり', perShiftTxt, '円', 'ok', '', '') +
+      tile('1日あたり', perDayTxt, '時間', M.st, 'tile3', '') +
+      '</div>' +
+      '<div class="aux">' +
+      '<div><small>残り乗務日数</small><span class="v"><b>' + M.remainDays + '</b><i>乗務</i></span></div>' +
+      '<div><small>乗務時間の残り</small><span class="v"><b id="a-time">' + ((M.limitMs - M.used) / HOUR).toFixed(1) + '</b><i>時間</i></span></div>' +
+      '<div><small>今日の帰庫目標</small><span class="v"><b id="a-ret">' + returnHtml(M) + '</b></span></div></div>' +
+      actionView(M) +
+      '<p class="foot">試作版 ・ ' + (storageOk ? '記録はこのスマホの中にだけ保存されます。間違えても、履歴から直せます。'
+        : 'このブラウザでは記録を保存できません。閉じると消えます。') + '</p>';
+  }
+
+  function setupView(M) {
+    var d = ui.draft;
+    var per = periodFor(Date.now(), d.closing);
+    var opts = '<option value="0"' + (d.closing === 0 ? ' selected' : '') + '>末日締め</option>';
+    for (var i = 1; i <= 28; i++) opts += '<option value="' + i + '"' + (d.closing === i ? ' selected' : '') + '>' + i + '日締め</option>';
+    var types = ['nikkin', 'yakin', 'kakujitsu'].map(function (k) {
+      return '<label><input type="radio" name="wt" value="' + k + '"' + (d.type === k ? ' checked' : '') + '><span>' + PRESET[k].label + '</span></label>';
+    }).join('');
+    var themes = ['dark', 'light', 'auto'].map(function (k) {
+      return '<label><input type="radio" name="th" value="' + k + '"' + (state.theme === k ? ' checked' : '') + '><span>' + THEMES[k] + '</span></label>';
+    }).join('');
+    return '<div class="bar"><button class="chip" data-act="go-home">← ホーム</button><h1>設定</h1></div>' +
+      '<p class="note">今期 <b id="s-period">' + periodLabel(per) + '</b> の設定です。数字の初期値は目安なので、会社の基準に合わせて直してください。</p>' +
+      '<div class="form">' +
+      '<div class="f"><span class="lab" id="wt-lab">勤務形態</span><div class="seg" role="radiogroup" aria-labelledby="wt-lab">' + types + '</div></div>' +
+      '<label class="f"><span>出勤予定日数</span><div class="inl"><input id="s-days" type="number" inputmode="numeric" min="1" max="31" value="' + d.days + '"><em>乗務</em></div></label>' +
+      '<label class="f"><span>乗務時間のリミット（拘束時間）</span><div class="inl"><input id="s-limit" type="number" inputmode="decimal" min="1" step="0.5" value="' + d.limitH + '"><em>時間</em></div></label>' +
+      '<label class="f"><span>1乗務あたりの必要な休憩</span><div class="inl"><input id="s-rest" type="number" inputmode="decimal" min="0" step="0.25" value="' + d.restH + '"><em>時間</em></div></label>' +
+      '<label class="f"><span>売上目標</span><div class="inl"><input id="s-target" type="number" inputmode="numeric" min="0" step="1000" value="' + d.target + '"><em>円</em></div><small id="s-hint"></small></label>' +
+      '<label class="f"><span>締め日（営業所に合わせる）</span><select id="s-close">' + opts + '</select><small>15日締めなら、期間は16日から翌15日です。</small></label>' +
+      '<div class="f"><span class="lab" id="th-lab">画面の色</span><div class="seg" role="radiogroup" aria-labelledby="th-lab">' + themes + '</div></div>' +
+      '<p class="err" role="alert">' + (d.err || '') + '</p>' +
+      '<button class="btn go" data-act="setup-save">保存してホームへ</button></div>' +
+      '<button class="btn ghost sm" data-act="reset-ask">記録を全部消す</button>';
+  }
+
+  function rowHtml(r, now) {
+    var m = recM(r, now), cfg = getCfg(periodFor(r.s).key).cfg, d = new Date(r.s);
+    var span = clock(r.s) + ' → ' + (r.e == null ? '乗務中' : ((sameDay(r.s, r.e) ? '' : '翌') + clock(r.e)));
+    var amt = r.e == null ? '<span class="amt none">乗務中</span>'
+      : (r.sales == null ? '<span class="amt none">売上 未入力</span>' : '<span class="amt">' + yen(r.sales) + '円</span>');
+    var short = r.e != null && m.rest < cfg.restH * HOUR;
+    var line = '<span class="nw">拘束 ' + hm(m.kosoku) + '</span> ・ <span class="nw">ハンドル ' + hm(m.handle) + '</span>' +
+      (r.e != null && m.ph != null ? ' ・ <span class="nw">時間あたり ' + yen(m.ph) + '円</span>' : '') +
+      (short ? ' <span class="tag warn">休憩不足</span>' : '');
+    return '<button class="row" data-act="edit" data-id="' + r.id + '"><div class="r1"><span class="d">' + (d.getMonth() + 1) + '/' + d.getDate() + '(' + WD[d.getDay()] + ')</span>' +
+      '<span class="t">' + span + '</span>' + amt + '</div><div class="r2">' + line + '</div></button>';
+  }
+  function historyView(M) {
+    var per = periodFor(ui.histTs), now = Date.now();
+    var recs = recsIn(per).sort(function (a, b) { return b.s - a.s; });
+    var tS = 0, tH = 0, n = 0;
+    recs.forEach(function (r) { if (r.e != null) { n++; tS += r.sales || 0; if (r.sales != null) tH += recM(r, now).handle; } });
+    var avg = tH > 0 ? tS / (tH / HOUR) : null;
+    var isCur = per.e > now;
+    var rows = recs.length ? recs.map(function (r) { return rowHtml(r, now); }).join('')
+      : '<div class="empty">この期間の記録はまだありません。出庫して帰庫すると、ここに並びます。押し忘れたときは「記録を追加」から入れられます。</div>';
+    var csv = ui.csv ? '<div class="stack"><p class="note">' + ui.csv.msg + '</p><textarea id="csv-box" class="csvbox" readonly>' + ui.csv.text + '</textarea></div>' : '';
+    return '<div class="bar"><button class="chip" data-act="go-home">← ホーム</button><h1>履歴</h1></div>' +
+      '<div class="nav"><button class="chip" data-act="hist-prev" aria-label="前の期間">◀ 前</button><div class="lbl">' + periodLabel(per) + '</div>' +
+      '<button class="chip" data-act="hist-next"' + (isCur ? ' disabled' : '') + ' aria-label="次の期間">次 ▶</button></div>' +
+      '<div class="sum"><div><small>乗務</small><b>' + n + '<i>回</i></b></div><div><small>売上合計</small><b>' + yen(tS) + '<i>円</i></b></div>' +
+      '<div><small>時間あたり</small><b>' + (avg == null ? '—' : yen(avg) + '<i>円</i>') + '</b></div></div>' +
+      '<div class="rows">' + rows + '</div>' +
+      '<div class="two"><button class="btn ghost sm" data-act="add-rec">記録を追加</button><button class="btn ghost sm" data-act="csv">CSVをコピー</button></div>' + csv;
+  }
+
+  function doneView() {
+    var r = state.records.find(function (x) { return x.id === ui.doneId; });
+    if (!r) return '<div class="done"><button class="btn go" data-act="go-home">ホームへ</button></div>';
+    var m = recM(r, Date.now());
+    return '<div class="done"><div class="k">今日の売上</div><div class="n">' + yen(r.sales) + '<span>円</span></div>' +
+      '<div class="s"><div><small>時間あたり売上</small><b>' + (m.ph == null ? '—' : yen(m.ph) + '円') + '</b></div>' +
+      '<div><small>ハンドル</small><b>' + hm(m.handle) + '</b></div></div>' +
+      '<p class="thanks">お疲れ様でした♪<br>ゆっくりお休みください。</p>' +
+      '<button class="btn go" data-act="go-home">ホームへ</button></div>';
+  }
+
+  function overlayView(M) {
+    var o = ui.overlay;
+    if (!o) return '';
+    if (o.type === 'confirm') {
+      return '<div class="scrim"><div class="sheet" role="dialog" aria-modal="true"><h2>' + o.title + '</h2><p>' + o.body + '</p>' +
+        '<button class="btn ' + (o.kind || 'go') + '" data-act="confirm-ok">' + o.ok + '</button>' +
+        '<button class="btn ghost sm" data-act="confirm-cancel">' + (o.cancel || 'やめる') + '</button></div></div>';
+    }
+    if (o.type === 'sales') {
+      var r = state.records.find(function (x) { return x.id === o.id; });
+      var v = o.val;
+      var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '00', '0', 'del'].map(function (k) {
+        return '<button class="key" data-act="key" data-k="' + k + '" aria-label="' + (k === 'del' ? '一文字消す' : k) + '">' + (k === 'del' ? '⌫' : k) + '</button>';
+      }).join('');
+      return '<div class="pad"><div class="pad-in"><div class="pad-head"><b>売上を入力</b><button class="chip" data-act="sales-later">あとで</button></div>' +
+        (r ? '<p class="note">' + md(r.s) + ' ' + clock(r.s) + ' 出庫' + (r.e ? ' → ' + clock(r.e) + ' 帰庫' : '') + '</p>' : '') +
+        '<div class="pad-amt">' + (v ? Number(v).toLocaleString('ja-JP') : '0') + '<span>円</span></div>' +
+        '<div class="keys">' + keys + '</div>' +
+        '<button class="btn go" data-act="sales-ok"' + (v ? '' : ' disabled') + '>決定</button></div></div>';
+    }
+    if (o.type === 'edit') {
+      var rec = o.id ? state.records.find(function (x) { return x.id === o.id; }) : null;
+      var now = Date.now();
+      var s0 = rec ? rec.s : now - 12 * HOUR;
+      var e0 = rec ? rec.e : now;
+      var restMin = rec ? Math.round(recM(rec, now).rest / MIN) : 0;
+      return '<div class="scrim"><div class="sheet" role="dialog" aria-modal="true"><h2>' + (rec ? '記録を直す' : '記録を追加') + '</h2>' +
+        '<label class="f"><span>出庫</span><input id="f-s" type="datetime-local" value="' + dtLocal(s0) + '"></label>' +
+        '<label class="f"><span>帰庫</span><input id="f-e" type="datetime-local" value="' + (e0 == null ? '' : dtLocal(e0)) + '"><small>空にすると、乗務中の記録になります。</small></label>' +
+        '<label class="f"><span>休憩の合計（分）</span><input id="f-rest" type="number" inputmode="numeric" min="0" step="1" value="' + restMin + '" data-orig="' + restMin + '"></label>' +
+        '<label class="f"><span>売上（円）</span><input id="f-sales" type="number" inputmode="numeric" min="0" step="1" value="' + (rec && rec.sales != null ? rec.sales : '') + '"></label>' +
+        '<p class="err" role="alert">' + (o.err || '') + '</p>' +
+        '<button class="btn go" data-act="edit-save">保存</button>' +
+        (rec ? '<div class="two">' +
+          (rec.e != null ? '<button class="btn ghost sm" data-act="edit-undo-stop">帰庫を<br>取り消す</button>' : '<span></span>') +
+          '<button class="btn ghost sm" data-act="edit-delete">出庫を<br>取り消す</button></div>' : '') +
+        '<button class="btn ghost sm" data-act="edit-cancel">閉じる</button></div></div>';
+    }
+    return '';
+  }
+
+  function render() {
+    var M = compute(Date.now()), h = '';
+    if (ui.screen === 'home') h = homeView(M);
+    else if (ui.screen === 'setup') h = setupView(M);
+    else if (ui.screen === 'history') h = historyView(M);
+    else if (ui.screen === 'done') h = doneView();
+    root.innerHTML = h + overlayView(M);
+    if (ui.screen === 'setup') updateHint();
+    window.scrollTo(0, 0);
+  }
+
+  /* keeps the clock-like numbers moving without rebuilding buttons under a thumb */
+  function live() {
+    if (ui.screen !== 'home' || ui.overlay) return;
+    var M = compute(Date.now());
+    function set(id, t) { var el = document.getElementById(id); if (el && el.textContent !== t) el.textContent = t; }
+    set('a-time', ((M.limitMs - M.used) / HOUR).toFixed(1));
+    var ar = document.getElementById('a-ret'), rh = returnHtml(M);
+    if (ar && ar.innerHTML !== rh) ar.innerHTML = rh;
+    if (M.cur) {
+      var c = recM(M.cur, M.now);
+      set('v-elapsed', hm(c.kosoku)); set('v-handle', hm(c.handle)); set('v-rest', hm(c.rest));
+      if (M.onBreak) set('v-break', hm(M.now - M.cur.br[M.cur.br.length - 1].s)); else set('v-restleft', restLeftText(M));
+    }
+    var t3 = document.getElementById('tile3'); if (t3 && t3.dataset.s !== M.st) t3.dataset.s = M.st;
+    var bn = document.getElementById('banners'), bh = banners(M).map(bannerHtml).join('');
+    if (bn && bh !== lastBanner) { bn.innerHTML = bh; lastBanner = bh; }
+  }
+
+  function applyTheme() {
+    var r = document.documentElement;
+    if (state.theme === 'dark' || state.theme === 'light') r.setAttribute('data-theme', state.theme); else r.removeAttribute('data-theme');
+  }
+  function updateHint() {
+    var d = ui.draft; if (!d) return;
+    var days = parseInt(d.days, 10), t = parseInt(d.target, 10), el = document.getElementById('s-hint');
+    if (el) el.textContent = (days > 0 && t >= 0) ? '1乗務あたり換算 ' + yen(t / days) + '円' : '';
+    var p = document.getElementById('s-period'); if (p) p.textContent = periodLabel(periodFor(Date.now(), d.closing));
+  }
+  function openSetup() {
+    var g = getCfg(periodFor(Date.now()).key), c = g.cfg;
+    ui.draft = { type: c.type, days: c.days, limitH: c.limitH, restH: c.restH, target: c.target, closing: state.closing, err: '' };
+    ui.screen = 'setup';
+  }
+  function csvFor(per) {
+    var now = Date.now(), L = ['日付,出庫,帰庫,拘束(分),休憩(分),ハンドル(分),売上(円),時間あたり売上(円)'];
+    recsIn(per).sort(function (a, b) { return a.s - b.s; }).forEach(function (r) {
+      var m = recM(r, now), done = r.e != null;
+      L.push([ymd(new Date(r.s)), clock(r.s), done ? clock(r.e) : '', done ? Math.round(m.kosoku / MIN) : '',
+        done ? Math.round(m.rest / MIN) : '', done ? Math.round(m.handle / MIN) : '', r.sales == null ? '' : r.sales,
+        m.ph == null ? '' : Math.round(m.ph)].join(','));
+    });
+    return L.join('\n');
+  }
+  function curRec() { return state.records.find(function (r) { return r.e == null; }) || null; }
+
+  /* ---------- actions ---------- */
+  function act(a, el) {
+    var o = ui.overlay, now = Date.now(), M, cur, r;
+    switch (a) {
+      case 'start':
+        if (curRec()) break;
+        state.records.push({ id: uid(), s: now, e: null, br: [], sales: null, restOv: null });
+        save(); break;
+      case 'break-start':
+        cur = curRec(); if (cur && !(cur.br.length && cur.br[cur.br.length - 1].e == null)) { cur.br.push({ s: now, e: null }); save(); }
+        break;
+      case 'break-end':
+        cur = curRec(); if (cur && cur.br.length && cur.br[cur.br.length - 1].e == null) { cur.br[cur.br.length - 1].e = now; save(); }
+        break;
+      case 'stop':
+        M = compute(now); if (!M.cur) break;
+        var short = Math.max(0, M.reqRest - M.curRest);
+        ui.overlay = {
+          type: 'confirm', title: '帰庫しますか？', kind: 'stop', ok: '帰庫する', cancel: 'やめる',
+          body: short > 0 ? '休憩が規定にあと ' + hmJa(short) + ' 足りません。このまま帰庫しますか？' : '押し間違えても、履歴からあとで直せます。',
+          run: function () {
+            var c = curRec(), t = Date.now(); if (!c) return;
+            var lb = c.br[c.br.length - 1]; if (lb && lb.e == null) lb.e = t;
+            c.e = t; save();
+            ui.overlay = { type: 'sales', id: c.id, val: c.sales != null ? String(c.sales) : '' };
+          }
+        };
+        break;
+      case 'confirm-ok': var f = o && o.run; ui.overlay = null; if (f) f(); break;
+      case 'confirm-cancel': ui.overlay = null; break;
+      case 'pending-sales': M = compute(now); if (M.pending) ui.overlay = { type: 'sales', id: M.pending.id, val: '' }; break;
+      case 'key':
+        if (!o || o.type !== 'sales') break;
+        var k = el.dataset.k;
+        if (k === 'del') o.val = o.val.slice(0, -1);
+        else if (!(o.val === '' && (k === '0' || k === '00'))) o.val = (o.val + k).slice(0, 7);
+        break;
+      case 'sales-ok':
+        if (!o || o.type !== 'sales' || !o.val) break;
+        r = state.records.find(function (x) { return x.id === o.id; });
+        if (r) { r.sales = parseInt(o.val, 10); save(); ui.doneId = r.id; ui.screen = 'done'; }
+        ui.overlay = null; break;
+      case 'sales-later': ui.overlay = null; ui.screen = 'home'; break;
+      case 'go-home': ui.screen = 'home'; ui.overlay = null; break;
+      case 'go-setup': openSetup(); break;
+      case 'go-history': ui.screen = 'history'; ui.histTs = now; ui.csv = null; break;
+      case 'theme':
+        state.theme = state.theme === 'dark' ? 'light' : (state.theme === 'light' ? 'auto' : 'dark');
+        applyTheme(); save(); break;
+      case 'hist-prev': ui.histTs = periodFor(ui.histTs).s - 1; ui.csv = null; break;
+      case 'hist-next': if (periodFor(ui.histTs).e <= now) { ui.histTs = periodFor(ui.histTs).e; ui.csv = null; } break;
+      case 'csv':
+        var text = csvFor(periodFor(ui.histTs));
+        var fallback = function () { ui.csv = { text: text, msg: '自動でコピーできませんでした。下の文字を選んでコピーしてください。' }; render(); var b = document.getElementById('csv-box'); if (b) { b.focus(); b.select(); } };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { ui.csv = { text: text, msg: 'コピーしました。表計算ソフトやメモに貼り付けてください。' }; render(); }, fallback);
+        } else fallback();
+        return;
+      case 'edit': ui.overlay = { type: 'edit', id: el.dataset.id, err: '' }; break;
+      case 'add-rec': ui.overlay = { type: 'edit', id: null, err: '' }; break;
+      case 'edit-cancel': ui.overlay = null; break;
+      case 'edit-save': saveEdit(); break;
+      case 'edit-undo-stop':
+        r = state.records.find(function (x) { return x.id === o.id; });
+        if (r && r.e != null) {
+          var other = curRec();
+          if (other && other.id !== r.id) { o.err = '乗務中の記録がほかにあります。先にそちらを帰庫してください。'; break; }
+          r.e = null; save(); ui.overlay = null;
+        }
+        break;
+      case 'edit-delete':
+        var rid = o.id;
+        ui.overlay = {
+          type: 'confirm', title: '出庫を取り消しますか？', kind: 'over', ok: '取り消して記録を消す', cancel: 'やめる',
+          body: 'この乗務の記録（出庫・帰庫・休憩・売上）が消えて、なかったことになります。',
+          run: function () { state.records = state.records.filter(function (x) { return x.id !== rid; }); save(); ui.overlay = null; }
+        };
+        break;
+      case 'setup-save': saveSetup(); break;
+      case 'reset-ask':
+        ui.overlay = {
+          type: 'confirm', title: '記録を全部消しますか？', kind: 'over', ok: '全部消す', cancel: 'やめる',
+          body: 'この端末に保存した記録と設定がすべて消えます。元には戻せません。',
+          run: function () { state = defaults(); save(); applyTheme(); ui.screen = 'home'; ui.overlay = null; }
+        };
+        break;
+      default: return;
+    }
+    render();
+  }
+
+  function saveEdit() {
+    var o = ui.overlay, rec = o.id ? state.records.find(function (x) { return x.id === o.id; }) : null;
+    var sv = document.getElementById('f-s').value, ev = document.getElementById('f-e').value;
+    var restEl = document.getElementById('f-rest'), salesV = document.getElementById('f-sales').value.trim();
+    var s = sv ? new Date(sv).getTime() : NaN, e = ev ? new Date(ev).getTime() : null;
+    var restMin = parseInt(restEl.value, 10);
+    if (isNaN(s)) { o.err = '出庫の日時を入れてください。'; return render(); }
+    if (e != null && (isNaN(e) || e <= s)) { o.err = '帰庫は出庫より後の時刻にしてください。'; return render(); }
+    if (restEl.value !== '' && (isNaN(restMin) || restMin < 0)) { o.err = '休憩は0分以上で入れてください。'; return render(); }
+    var sales = null;
+    if (salesV !== '') { sales = parseInt(salesV, 10); if (isNaN(sales) || sales < 0) { o.err = '売上は0円以上で入れてください。'; return render(); } }
+    var other = curRec();
+    if (e == null && other && (!rec || other.id !== rec.id)) { o.err = '乗務中の記録はひとつだけです。帰庫の時刻を入れてください。'; return render(); }
+    if (!rec) { rec = { id: uid(), s: s, e: e, br: [], sales: sales, restOv: null }; state.records.push(rec); }
+    var changedRest = restEl.value !== '' && String(restMin) !== restEl.getAttribute('data-orig');
+    rec.s = s; rec.e = e; rec.sales = sales;
+    if (changedRest) rec.restOv = restMin;
+    save(); ui.overlay = null; render();
+  }
+
+  function saveSetup() {
+    var d = ui.draft;
+    var days = parseInt(d.days, 10), limitH = parseFloat(d.limitH), restH = parseFloat(d.restH), target = parseInt(d.target, 10);
+    var err = '';
+    if (!(days >= 1 && days <= 31)) err = '出勤予定日数は1〜31で入れてください。';
+    else if (!(limitH > 0 && limitH <= 744)) err = '乗務時間のリミットは時間で入れてください。';
+    else if (!(restH >= 0 && restH <= 24)) err = '必要な休憩は時間で入れてください。';
+    else if (!(target >= 0)) err = '売上目標は0円以上で入れてください。';
+    if (err) { d.err = err; return render(); }
+    state.closing = d.closing;
+    var cfg = { type: d.type, days: days, limitH: limitH, restH: restH, target: target };
+    state.periods[periodFor(Date.now()).key] = cfg;
+    state.lastCfg = cfg;
+    save(); ui.screen = 'home'; render();
+  }
+
+  /* ---------- events ---------- */
+  root.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-act]');
+    if (t && !t.disabled) act(t.getAttribute('data-act'), t);
+  });
+  root.addEventListener('change', function (e) {
+    var t = e.target;
+    if (ui.screen !== 'setup' || !ui.draft) return;
+    if (t.name === 'wt') {
+      var p = PRESET[t.value], d = ui.draft;
+      d.type = t.value; d.days = p.days; d.limitH = p.limitH; d.restH = p.restH; d.target = p.target; d.err = '';
+      render();
+    } else if (t.name === 'th') {
+      state.theme = t.value; applyTheme(); save();
+    }
+  });
+  function onField(e) {
+    var d = ui.draft, id = e.target.id;
+    if (ui.screen !== 'setup' || !d) return;
+    if (id === 's-days') d.days = e.target.value;
+    else if (id === 's-limit') d.limitH = e.target.value;
+    else if (id === 's-rest') d.restH = e.target.value;
+    else if (id === 's-target') d.target = e.target.value;
+    else if (id === 's-close') d.closing = parseInt(e.target.value, 10);
+    else return;
+    updateHint();
+  }
+  root.addEventListener('input', onField);
+  root.addEventListener('change', onField);
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) return;
+    if (!ui.overlay && ui.screen === 'home') render();
+  });
+  setInterval(live, 1000);
+
+  applyTheme();
+  render();
+})();
+</script>
+</body>
+</html>
