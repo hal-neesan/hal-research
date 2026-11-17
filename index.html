@@ -218,12 +218,55 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
 .chara { text-align: center; padding: 22px 0 0; }
 .chara img { width: 118px; max-width: 38vw; height: auto; border-radius: 12px; }
 
+/* Hal-neesan greeting. Full screen, in the same light blue as the picture's own background,
+   so the picture has no visible edges in either theme. Display and sound only. */
+.greet { --greet-bg: #CBE6F6; position: fixed; inset: 0; z-index: 50; margin: 0; border: 0; border-radius: 0; overflow: hidden; cursor: pointer;
+  padding: calc(44px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-left, 0px)) 0 max(16px, env(safe-area-inset-right, 0px));
+  background: var(--greet-bg); color: #0d1a27; font: inherit; text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  animation: greet-in .25s ease-out both; }
+.greet:focus-visible { outline-offset: -6px; }
+.greet-bar { position: absolute; top: 0; left: 0; right: 0; height: 5px; background: rgba(13, 26, 39, .28); transform-origin: left center; animation: greet-bar 20s linear both; }
+.greet-hint { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); font-size: 13px; font-weight: 700; color: #35506a; }
+.greet-bubble { position: relative; max-width: 360px; width: 100%; padding: 16px 22px; border-radius: 22px; background: rgba(255, 255, 255, .92); box-shadow: 0 4px 16px rgba(13, 26, 39, .14); display: flex; flex-direction: column; gap: 2px; }
+.greet-bubble::after { content: ""; position: absolute; left: 50%; bottom: -9px; width: 18px; height: 18px; background: rgba(255, 255, 255, .92); border-radius: 3px; transform: translateX(-50%) rotate(45deg); }
+.greet-line { display: block; font-size: clamp(24px, 7.4vw, 34px); font-weight: 900; line-height: 1.4; text-wrap: balance; animation: greet-text .5s ease-out both; }
+.greet-ph { display: inline-block; }
+.greet-stage { display: block; margin-bottom: -14px; line-height: 0; }
+.greet-img { display: block; height: min(72vh, 640px); width: auto; max-width: 88vw; margin: 0 auto; object-fit: contain; object-position: bottom; transform-origin: 50% 100%;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 95%, transparent 100%); mask-image: linear-gradient(to right, transparent 0, #000 12%, #000 95%, transparent 100%);
+  animation: greet-rise .55s cubic-bezier(.2, .8, .2, 1) both; }
+.greet-img.sway { animation: greet-rise .55s cubic-bezier(.2, .8, .2, 1) both, greet-wave 1.8s ease-in-out .6s infinite; }
+.greet.kiko .greet-img.sway { animation: greet-rise .55s cubic-bezier(.2, .8, .2, 1) both, greet-nod 2.2s ease-in-out .6s infinite; }
+/* phone held sideways: bubble on the left, picture on the right */
+@media (orientation: landscape) and (max-height: 520px) {
+  .greet { flex-direction: row; align-items: flex-end; justify-content: center; gap: 28px; padding-top: calc(20px + env(safe-area-inset-top, 0px)); }
+  .greet-bubble { align-self: center; width: auto; max-width: 380px; }
+  .greet-bubble::after { left: auto; right: -9px; bottom: auto; top: 50%; transform: translateY(-50%) rotate(45deg); }
+  .greet-img { height: min(92vh, 560px); max-width: 40vw; }
+  .greet-line { font-size: clamp(22px, 3.6vw, 28px); }
+}
+@keyframes greet-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes greet-rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes greet-wave { 0%, 100% { transform: rotate(-1.6deg); } 50% { transform: rotate(1.6deg); } }
+@keyframes greet-nod { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+@keyframes greet-text { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes greet-bar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
 
 <div id="app" class="app"></div>
+
+<!-- Hal-neesan greeting (filled and shown by script; lives outside #app so redraws never restart it) -->
+<button type="button" id="greet" class="greet" hidden>
+  <span class="greet-bar" id="greet-bar" aria-hidden="true"></span>
+  <span class="greet-hint" aria-hidden="true">タップでもどる</span>
+  <span class="greet-bubble" id="greet-text"></span>
+  <span class="greet-stage" id="greet-stage"><img class="greet-img sway" id="greet-img" src="hal-neesan.png" alt=""></span>
+</button>
 
 <script>
 (function () {
@@ -257,6 +300,77 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
   var ui = { screen: 'home', overlay: null, draft: null, histTs: Date.now(), doneId: null, csv: null };
   var lastBanner = '';
   var root = document.getElementById('app');
+
+  /* ---------- greeting (Hal-neesan) ----------
+     Display and sound only. It is always started AFTER the record has been saved, never reads or writes
+     state or records, and every call is wrapped so that a failure here can never stop the app. */
+  var GREET_MS = 20000;        /* back to the app by itself after this long */
+  var GREET_GUARD_MS = 600;    /* taps this soon after it opens are ignored (a double tap on the button) */
+  var AFTER_KIKO = 'home';     /* screen under the return greeting: 'home', or 'done' (today's sales summary) */
+  var GREET = {
+    shukko: { src: 'voice_shukko.mp3', video: null, lines: [['安全運転で', 'いってらっしゃい。']] },
+    kiko:   { src: 'voice_kiko.mp3',   video: null, lines: [['おつかれさまでした。'], ['おかえりなさい。']] }
+    /* lines: one array per line, one string per phrase (a line breaks only between phrases).
+       video: set to e.g. 'hal-shukko.mp4' / 'hal-kiko.mp4' once those files exist; null = the still picture with CSS motion */
+  };
+  var LINE_AT = 0.3, LINE_STEP = 1.4;   /* seconds: when the first line appears, and the gap to the next one */
+  var VOICE = {}, greetTimer = null, greetOpenedAt = 0;
+
+  function voiceFor(kind) {
+    try {
+      if (!VOICE[kind]) { var a = new Audio(GREET[kind].src); a.preload = 'auto'; VOICE[kind] = a; }
+      return VOICE[kind];
+    } catch (e) { return null; }
+  }
+  function stopVoices() {
+    Object.keys(VOICE).forEach(function (k) { try { VOICE[k].pause(); VOICE[k].currentTime = 0; } catch (e) {} });
+  }
+  function greetClose() {
+    try {
+      clearTimeout(greetTimer);
+      stopVoices();
+      var el = document.getElementById('greet'); if (el) el.hidden = true;
+      var v = document.getElementById('greet-video'); if (v) v.remove();
+    } catch (e) {}
+  }
+  function greetOpen(kind) {
+    try {
+      var g = GREET[kind], el = document.getElementById('greet'), tx = document.getElementById('greet-text');
+      if (!g || !el || !tx) return;
+      clearTimeout(greetTimer); stopVoices();
+      tx.textContent = '';
+      g.lines.forEach(function (line, i) {
+        var p = document.createElement('span');
+        p.className = 'greet-line'; p.style.animationDelay = (LINE_AT + i * LINE_STEP) + 's';
+        line.forEach(function (ph) { var q = document.createElement('span'); q.className = 'greet-ph'; q.textContent = ph; p.appendChild(q); });  /* a line only breaks between phrases */
+        tx.appendChild(p);
+      });
+      var img = document.getElementById('greet-img'), stage = document.getElementById('greet-stage');
+      var old = document.getElementById('greet-video'); if (old) old.remove();
+      img.hidden = false;
+      if (g.video) {
+        var v = document.createElement('video');
+        v.id = 'greet-video'; v.className = 'greet-img'; v.src = g.video; v.poster = 'hal-neesan.png';
+        v.muted = true; v.playsInline = true; v.setAttribute('playsinline', ''); v.preload = 'auto';
+        v.addEventListener('error', function () { v.remove(); img.hidden = false; });
+        stage.appendChild(v); img.hidden = true;
+        var vp = v.play(); if (vp && vp.catch) vp.catch(function () {});
+      }
+      el.className = 'greet ' + kind;
+      document.getElementById('greet-bar').style.animationDuration = GREET_MS + 'ms';
+      el.hidden = false;
+      greetOpenedAt = Date.now();
+      var a = voiceFor(kind);
+      if (a) { try { a.currentTime = 0; } catch (e) {} var p2 = a.play(); if (p2 && p2.catch) p2.catch(function () {}); }
+      greetTimer = setTimeout(greetClose, GREET_MS);
+      try { el.focus({ preventScroll: true }); } catch (e) {}
+    } catch (e) {}
+  }
+  document.getElementById('greet').addEventListener('click', function () {
+    if (Date.now() - greetOpenedAt < GREET_GUARD_MS) return;
+    greetClose();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') greetClose(); });
 
 
   /* ---------- helpers ---------- */
@@ -594,7 +708,9 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
       case 'start':
         if (curRec()) break;
         state.records.push({ id: uid(), s: now, e: null, br: [], sales: null, restOv: null });
-        save(); break;
+        save();
+        greetOpen('shukko');   /* after the record is saved; the time above was fixed at the tap */
+        break;
       case 'break-start':
         cur = curRec(); if (cur && !(cur.br.length && cur.br[cur.br.length - 1].e == null)) { cur.br.push({ s: now, e: null }); save(); }
         break;
@@ -611,7 +727,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
             var c = curRec(), t = Date.now(); if (!c) return;
             var lb = c.br[c.br.length - 1]; if (lb && lb.e == null) lb.e = t;
             c.e = t; save();
-            ui.overlay = { type: 'sales', id: c.id, val: c.sales != null ? String(c.sales) : '' };
+            ui.overlay = { type: 'sales', id: c.id, val: c.sales != null ? String(c.sales) : '', fromStop: true };
           }
         };
         break;
@@ -627,9 +743,15 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
       case 'sales-ok':
         if (!o || o.type !== 'sales' || !o.val) break;
         r = state.records.find(function (x) { return x.id === o.id; });
-        if (r) { r.sales = parseInt(o.val, 10); save(); ui.doneId = r.id; ui.screen = 'done'; }
-        ui.overlay = null; break;
-      case 'sales-later': ui.overlay = null; ui.screen = 'home'; break;
+        if (r) { r.sales = parseInt(o.val, 10); save(); ui.doneId = r.id; ui.screen = (o.fromStop && AFTER_KIKO === 'home') ? 'home' : 'done'; }
+        ui.overlay = null;
+        if (r && o.fromStop) greetOpen('kiko');   /* only right after a return, not when filling in an old shift's sales */
+        break;
+      case 'sales-later':
+        var fromStop = !!(o && o.fromStop);
+        ui.overlay = null; ui.screen = 'home';
+        if (fromStop) greetOpen('kiko');
+        break;
       case 'go-home': ui.screen = 'home'; ui.overlay = null; break;
       case 'go-setup': openSetup(); break;
       case 'go-history': ui.screen = 'history'; ui.histTs = now; ui.csv = null; break;
@@ -744,7 +866,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
   root.addEventListener('input', onField);
   root.addEventListener('change', onField);
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) return;
+    if (document.hidden) { greetClose(); return; }   /* leaving the app silences the greeting */
     if (!ui.overlay && ui.screen === 'home') render();
   });
   setInterval(live, 1000);
