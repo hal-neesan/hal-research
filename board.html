@@ -2,28 +2,91 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>掲示板 | Halねえさんの乗務手帳（リサーチ版）</title>
+<script>
+/* Theme: follow the setting the app saved in this browser (same origin).
+   No saved setting -> the app's default (dark). "auto" -> follow the phone. Runs before first paint. */
+(function () {
+  var t = 'dark';
+  try {
+    var o = JSON.parse(localStorage.getItem('uriage-jomu-v1') || 'null');
+    if (o && (o.theme === 'dark' || o.theme === 'light' || o.theme === 'auto')) t = o.theme;
+  } catch (e) {}
+  if (t !== 'auto') document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Noto+Sans+JP:wght@500;700;900&display=swap">
 <style>
-  :root { color-scheme: light dark; }
-  body { font-family: sans-serif; margin: 0; padding: 16px; line-height: 1.6; }
-  main { max-width: 640px; margin: 0 auto; }
-  h1 { font-size: 20px; margin: 8px 0 4px; }
-  .sub { font-size: 13px; opacity: .75; margin: 0 0 16px; }
-  a.back { display: inline-block; margin-bottom: 12px; }
-  form { border: 1px solid #8884; border-radius: 10px; padding: 12px; margin-bottom: 20px; }
-  label { display: block; font-size: 13px; margin: 8px 0 4px; }
-  input[type="text"], textarea { width: 100%; box-sizing: border-box; font-size: 16px; padding: 8px; border-radius: 6px; border: 1px solid #8888; background: transparent; color: inherit; }
-  textarea { min-height: 90px; }
-  button { margin-top: 12px; font-size: 16px; padding: 10px 20px; border-radius: 8px; border: 0; background: #2e7d32; color: #fff; width: 100%; }
-  button:disabled { opacity: .5; }
-  .post { border-bottom: 1px solid #8884; padding: 10px 2px; }
-  .meta { font-size: 12px; opacity: .7; }
-  .name { font-weight: bold; }
-  .body { white-space: pre-wrap; word-break: break-word; }
-  .msg { font-size: 14px; margin: 10px 0; }
-  .note { color: #b71c1c; font-size: 14px; margin: 10px 0 0; }
-  @media (prefers-color-scheme: dark) { .note { color: #ff9e99; } }
+/* Same colour tokens as index.html (dark first, light override). */
+:root {
+  --bg: #0b1219; --panel: #141f2a; --panel2: #1b2a38; --line: #2b3d50;
+  --fg: #f2f6fa; --muted: #9db0c3;
+  --go: #2fbf71; --go-ink: #03210f; --go-text: #5ee0a0;
+  --warn: #f5b82e; --over-text: #ff8a86;
+  --font-body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef3f8; --panel: #ffffff; --panel2: #e4ecf4; --line: #c6d3e0;
+    --fg: #0d1a27; --muted: #4c6178;
+    --go: #1c9a58; --go-ink: #ffffff; --go-text: #0f7a40;
+    --warn: #f1b21c; --over-text: #b3231f;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef3f8; --panel: #ffffff; --panel2: #e4ecf4; --line: #c6d3e0;
+  --fg: #0d1a27; --muted: #4c6178;
+  --go: #1c9a58; --go-ink: #ffffff; --go-text: #0f7a40;
+  --warn: #f1b21c; --over-text: #b3231f;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  padding-block: calc(12px + env(safe-area-inset-top, 0px)) calc(32px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-text-size-adjust: 100%;
+}
+main { max-width: 480px; margin: 0 auto; }
+a { color: var(--go-text); }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
+
+a.back { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; margin-bottom: 8px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); color: var(--fg); text-decoration: none; font-weight: 700; font-size: 15px; }
+h1 { font-size: 22px; font-weight: 900; margin: 8px 0 4px; }
+.sub { font-size: 14px; color: var(--muted); margin: 0 0 16px; }
+
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 20px; }
+label { display: block; font-size: 15px; font-weight: 700; margin: 10px 0 4px; }
+label:first-child { margin-top: 0; }
+input[type="text"], textarea { display: block; width: 100%; min-height: 48px; font-size: 16px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); }
+textarea { min-height: 110px; resize: vertical; }
+.btn { display: block; width: 100%; min-height: 56px; margin-top: 12px; border-radius: 14px; border: 0; background: var(--go); color: var(--go-ink); font-size: 20px; font-weight: 900; letter-spacing: .04em; }
+.btn:disabled { opacity: .4; cursor: default; }
+
+.note { color: var(--over-text); font-size: 14px; margin: 10px 0 0; }
+.msg { font-size: 15px; margin: 10px 0; }
+.msg:empty { display: none; }
+
+.post { border-bottom: 1px solid var(--line); padding: 10px 2px; }
+.meta { font-size: 13px; color: var(--muted); }
+.name { font-weight: 700; color: var(--fg); }
+.body { white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
@@ -32,22 +95,26 @@
   <h1>掲示板</h1>
   <p class="sub">試用版の感想・質問はこちらへどうぞ。名前は空でも書けます（「名無し」になります）。<a href="survey.html">試用アンケート（1分）はこちら</a>。</p>
 
-  <form id="post-form">
+  <form id="post-form" class="card">
     <label for="name">名前（任意）</label>
     <input type="text" id="name" maxlength="50" autocomplete="off">
     <label for="body">本文</label>
     <textarea id="body" maxlength="1000" required></textarea>
+    <!-- 仕様書 §9 指定: 投稿欄の近くに公開の注意書き -->
     <p class="note">この掲示板は公開されます。会社名、個人名、お客様の情報は書かないでください。</p>
-    <button type="submit" id="submit">書き込む</button>
-    <p class="msg" id="form-msg"></p>
+    <button type="submit" id="submit" class="btn">書き込む</button>
+    <p class="msg" id="form-msg" role="status" aria-live="polite"></p>
   </form>
 
   <div id="list"><p class="msg">読み込み中…</p></div>
 </main>
 <script>
+  /* Supabase project hal-research (anon public key; access control is done by RLS on the server side). */
   var SB_URL = 'https://fffjfvoxjddsqnofclop.supabase.co';
   var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZmpmdm94amRkc3Fub2ZjbG9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4ODA4MzQsImV4cCI6MjExMDQ1NjgzNH0.BEJNPdJNXBPoeyz-UU20MQ1OYDI1dq2mE7qh_guhgLg';
-  var SEEN_KEY = 'halBoardLastSeen';
+  var SEEN_KEY = 'halBoardLastSeen';   /* read by index.html for the new-post flag (§5) */
+  var POST_KEY = 'halBoardLastPost';   /* time of this device's last post (throttle) */
+  var POST_GAP_MS = 10000;
 
   function fmt(iso) {
     var d = new Date(iso);
@@ -57,6 +124,8 @@
     return { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json' };
   }
 
+  /* §9: everything from the server is drawn with textContent (never innerHTML).
+     A failed load must not look like "no posts yet": check r.ok and that the body is an array. */
   function load() {
     fetch(SB_URL + '/rest/v1/posts?select=id,name,body,created_at&order=created_at.desc&limit=100', { headers: headers() })
       .then(function (r) { if (!r.ok) throw new Error('load failed'); return r.json(); })
@@ -87,6 +156,7 @@
             post.appendChild(bd);
             list.appendChild(post);
           });
+          /* remember the newest post time so the flag on index.html goes out (own posts never light it) */
           try { localStorage.setItem(SEEN_KEY, rows[0].created_at); } catch (e) {}
         }
       })
@@ -107,10 +177,12 @@
     var name = document.getElementById('name').value.trim();
     var body = document.getElementById('body').value.trim();
     if (!body) { msg.textContent = '本文を入れてください。'; return; }
+    /* §9: simple per-device gap between posts (not a complete defence) */
     var lastPost = 0;
-    try { lastPost = Number(localStorage.getItem('halBoardLastPost') || 0); } catch (e) {}
-    if (Date.now() - lastPost < 10000) { msg.textContent = '少し間をあけてから書き込んでください。'; return; }
+    try { lastPost = Number(localStorage.getItem(POST_KEY) || 0); } catch (e) {}
+    if (Date.now() - lastPost < POST_GAP_MS) { msg.textContent = '少し間をあけてから書き込んでください。'; return; }
     btn.disabled = true; msg.textContent = '送信中…';
+    /* only name and body are sent; id and created_at are not writable by anon (column privileges) */
     fetch(SB_URL + '/rest/v1/posts', {
       method: 'POST',
       headers: Object.assign(headers(), { 'Prefer': 'return=minimal' }),
@@ -118,7 +190,7 @@
     }).then(function (r) {
       btn.disabled = false;
       if (r.ok) {
-        try { localStorage.setItem('halBoardLastPost', String(Date.now())); } catch (e) {}
+        try { localStorage.setItem(POST_KEY, String(Date.now())); } catch (e) {}
         document.getElementById('body').value = '';
         msg.textContent = '書き込みました。ありがとうございます。';
         load();
