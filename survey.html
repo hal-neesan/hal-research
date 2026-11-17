@@ -88,6 +88,7 @@
 
     <fieldset>
       <legend>Q6. 使ってみて、分かりにくかった点、足りない機能、あったら便利な機能があれば、自由にどうぞ。</legend>
+      <p style="font-size:13px;color:#b71c1c;margin:0 0 8px">会社名、個人名、お客様の情報は書かないでください。</p>
       <textarea id="q6" maxlength="1000"></textarea>
     </fieldset>
 
@@ -135,6 +136,9 @@
     };
     var answered = Object.keys(payload).some(function (k) { return payload[k] !== null; });
     if (!answered) { msg.textContent = 'どれか1つでも答えてから送ってください。'; return; }
+    var lastPost = 0;
+    try { lastPost = Number(localStorage.getItem('halSurveyLastPost') || 0); } catch (e) {}
+    if (Date.now() - lastPost < 60000) { msg.textContent = '送信は1分に1回までです。少し間をあけてください。'; return; }
     btn.disabled = true; msg.textContent = '送信中…';
     fetch(SB_URL + '/rest/v1/surveys', {
       method: 'POST',
@@ -143,6 +147,7 @@
     }).then(function (r) {
       btn.disabled = false;
       if (r.ok) {
+        try { localStorage.setItem('halSurveyLastPost', String(Date.now())); } catch (e) {}
         document.getElementById('survey-form').style.display = 'none';
         document.getElementById('done').style.display = 'block';
       } else {
