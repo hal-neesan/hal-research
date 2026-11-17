@@ -58,8 +58,9 @@
 
   function load() {
     fetch(SB_URL + '/rest/v1/posts?select=id,name,body,created_at&order=created_at.desc&limit=100', { headers: headers() })
-      .then(function (r) { return r.json(); })
+      .then(function (r) { if (!r.ok) throw new Error('load failed'); return r.json(); })
       .then(function (rows) {
+        if (!Array.isArray(rows)) throw new Error('load failed');
         var list = document.getElementById('list');
         list.textContent = '';
         if (!rows.length) {
