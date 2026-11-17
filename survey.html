@@ -2,30 +2,93 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>試用アンケート | Halねえさんの乗務手帳（リサーチ版）</title>
+<script>
+/* Theme: follow the setting the app saved in this browser (same origin).
+   No saved setting -> the app's default (dark). "auto" -> follow the phone. Runs before first paint. */
+(function () {
+  var t = 'dark';
+  try {
+    var o = JSON.parse(localStorage.getItem('uriage-jomu-v1') || 'null');
+    if (o && (o.theme === 'dark' || o.theme === 'light' || o.theme === 'auto')) t = o.theme;
+  } catch (e) {}
+  if (t !== 'auto') document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Noto+Sans+JP:wght@500;700;900&display=swap">
 <style>
-  :root { color-scheme: light dark; }
-  body { font-family: sans-serif; margin: 0; padding: 16px; line-height: 1.6; }
-  main { max-width: 640px; margin: 0 auto; }
-  h1 { font-size: 20px; margin: 8px 0 4px; }
-  .sub { font-size: 13px; opacity: .75; margin: 0 0 16px; }
-  a.back { display: inline-block; margin-bottom: 12px; }
-  fieldset { border: 1px solid #8884; border-radius: 10px; padding: 12px; margin-bottom: 16px; }
-  legend { font-size: 15px; font-weight: bold; padding: 0 6px; }
-  label.choice { display: block; font-size: 16px; padding: 6px 0; }
-  label.choice input { margin-right: 8px; }
-  label.small { display: block; font-size: 13px; margin: 8px 0 4px; }
-  input[type="text"], textarea { width: 100%; box-sizing: border-box; font-size: 16px; padding: 8px; border-radius: 6px; border: 1px solid #8888; background: transparent; color: inherit; }
-  textarea { min-height: 90px; }
-  .row { display: flex; gap: 12px; }
-  .row > div { flex: 1; min-width: 0; }
-  button { margin-top: 12px; font-size: 16px; padding: 10px 20px; border-radius: 8px; border: 0; background: #2e7d32; color: #fff; width: 100%; }
-  button:disabled { opacity: .5; }
-  .msg { font-size: 14px; margin: 10px 0; }
-  .done { border: 1px solid #8884; border-radius: 10px; padding: 16px; margin-bottom: 20px; }
-  .warn { color: #b71c1c; font-size: 13px; margin: 0 0 8px; }
-  @media (prefers-color-scheme: dark) { .warn { color: #ff9e99; } }
+/* Same colour tokens as index.html (dark first, light override). */
+:root {
+  --bg: #0b1219; --panel: #141f2a; --panel2: #1b2a38; --line: #2b3d50;
+  --fg: #f2f6fa; --muted: #9db0c3;
+  --go: #2fbf71; --go-ink: #03210f; --go-text: #5ee0a0;
+  --warn: #f5b82e; --over-text: #ff8a86;
+  --font-body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef3f8; --panel: #ffffff; --panel2: #e4ecf4; --line: #c6d3e0;
+    --fg: #0d1a27; --muted: #4c6178;
+    --go: #1c9a58; --go-ink: #ffffff; --go-text: #0f7a40;
+    --warn: #f1b21c; --over-text: #b3231f;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef3f8; --panel: #ffffff; --panel2: #e4ecf4; --line: #c6d3e0;
+  --fg: #0d1a27; --muted: #4c6178;
+  --go: #1c9a58; --go-ink: #ffffff; --go-text: #0f7a40;
+  --warn: #f1b21c; --over-text: #b3231f;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  padding-block: calc(12px + env(safe-area-inset-top, 0px)) calc(32px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-text-size-adjust: 100%;
+}
+main { max-width: 480px; margin: 0 auto; }
+a { color: var(--go-text); }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 3px solid var(--warn); outline-offset: 2px; }
+
+a.back { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; margin-bottom: 8px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); color: var(--fg); text-decoration: none; font-weight: 700; font-size: 15px; }
+h1 { font-size: 22px; font-weight: 900; margin: 8px 0 4px; }
+.sub { font-size: 14px; color: var(--muted); margin: 0 0 16px; }
+
+fieldset { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px 14px; margin: 0 0 16px; min-width: 0; }
+legend { font-size: 16px; font-weight: 900; padding: 0 6px; }
+label.choice { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 6px 0; font-size: 17px; }
+label.choice input { flex: none; width: 22px; height: 22px; margin: 0; accent-color: var(--go); }
+.small { display: block; font-size: 14px; font-weight: 700; margin: 10px 0 4px; }
+.hint { font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+.warn { font-size: 14px; font-weight: 700; color: var(--over-text); margin: 0 0 8px; }
+input[type="text"], textarea { display: block; width: 100%; min-height: 48px; font-size: 16px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); }
+textarea { min-height: 110px; resize: vertical; }
+.row { display: flex; gap: 12px; }
+.row > div { flex: 1; min-width: 0; }
+.btn { display: block; width: 100%; min-height: 56px; margin-top: 12px; border-radius: 14px; border: 0; background: var(--go); color: var(--go-ink); font-size: 20px; font-weight: 900; letter-spacing: .04em; }
+.btn:disabled { opacity: .4; cursor: default; }
+.msg { font-size: 15px; margin: 10px 0; }
+.msg:empty { display: none; }
+.done { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 20px; }
+.done p { margin: 0 0 10px; }
+.done p:last-child { margin-bottom: 0; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
@@ -70,7 +133,8 @@
 
     <fieldset>
       <legend>Q5. あなたの会社の締め日は何日ですか？ 月の乗務日数や、会社独自の時間の基準（法令より厳しい社内ルール）はありますか？</legend>
-      <p style="font-size:13px;opacity:.75;margin:0 0 8px">会社名は書かなくて構いません。締め日と日数、社内基準の有無だけで十分です。</p>
+      <!-- 仕様書 §9 指定: Q5 に「会社名は書かなくて構いません」 -->
+      <p class="hint">会社名は書かなくて構いません。締め日と日数、社内基準の有無だけで十分です。</p>
       <div class="row">
         <div>
           <label class="small" for="q5_closing">締め日</label>
@@ -81,9 +145,11 @@
           <input type="text" id="q5_days" maxlength="10" placeholder="例：12" autocomplete="off" inputmode="numeric">
         </div>
       </div>
-      <label class="small">社内基準</label>
-      <label class="choice"><input type="radio" name="q5_rule" value="なし">なし</label>
-      <label class="choice"><input type="radio" name="q5_rule" value="あり">あり</label>
+      <span class="small" id="q5_rule_lab">社内基準</span>
+      <div role="radiogroup" aria-labelledby="q5_rule_lab">
+        <label class="choice"><input type="radio" name="q5_rule" value="なし">なし</label>
+        <label class="choice"><input type="radio" name="q5_rule" value="あり">あり</label>
+      </div>
       <label class="small" for="q5_rule_text">「あり」の方は、内容を一言</label>
       <input type="text" id="q5_rule_text" maxlength="200" autocomplete="off">
     </fieldset>
@@ -91,11 +157,12 @@
     <fieldset>
       <legend>Q6. 使ってみて、分かりにくかった点、足りない機能、あったら便利な機能があれば、自由にどうぞ。</legend>
       <p class="warn">会社名、個人名、お客様の情報は書かないでください。</p>
+      <label class="small" for="q6" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Q6の回答</label>
       <textarea id="q6" maxlength="1000"></textarea>
     </fieldset>
 
-    <button type="submit" id="submit">回答を送る</button>
-    <p class="msg" id="form-msg"></p>
+    <button type="submit" id="submit" class="btn">回答を送る</button>
+    <p class="msg" id="form-msg" role="status" aria-live="polite"></p>
   </form>
 
   <div class="done" id="done" style="display:none">
@@ -104,8 +171,11 @@
   </div>
 </main>
 <script>
+  /* Supabase project hal-research (anon public key; access control is done by RLS on the server side). */
   var SB_URL = 'https://fffjfvoxjddsqnofclop.supabase.co';
   var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZmpmdm94amRkc3Fub2ZjbG9wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ4ODA4MzQsImV4cCI6MjExMDQ1NjgzNH0.BEJNPdJNXBPoeyz-UU20MQ1OYDI1dq2mE7qh_guhgLg';
+  var SURVEY_KEY = 'halSurveyLastPost';  /* time of this device's last answer (throttle) */
+  var SURVEY_GAP_MS = 60000;
 
   function radio(name) {
     var els = document.getElementsByName(name);
@@ -123,6 +193,7 @@
     ev.preventDefault();
     var btn = document.getElementById('submit');
     var msg = document.getElementById('form-msg');
+    /* the 11 answer columns of surveys; unanswered ones are sent as null */
     var payload = {
       q1: radio('q1'),
       q2: radio('q2'),
@@ -139,9 +210,10 @@
     var answered = Object.keys(payload).some(function (k) { return payload[k] !== null; });
     if (!answered) { msg.textContent = 'どれか1つでも答えてから送ってください。'; return; }
     var lastPost = 0;
-    try { lastPost = Number(localStorage.getItem('halSurveyLastPost') || 0); } catch (e) {}
-    if (Date.now() - lastPost < 60000) { msg.textContent = '送信は1分に1回までです。少し間をあけてください。'; return; }
+    try { lastPost = Number(localStorage.getItem(SURVEY_KEY) || 0); } catch (e) {}
+    if (Date.now() - lastPost < SURVEY_GAP_MS) { msg.textContent = '送信は1分に1回までです。少し間をあけてください。'; return; }
     btn.disabled = true; msg.textContent = '送信中…';
+    /* write-only: Prefer return=minimal, and the answers are never read back or drawn on a page */
     fetch(SB_URL + '/rest/v1/surveys', {
       method: 'POST',
       headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
@@ -149,7 +221,7 @@
     }).then(function (r) {
       btn.disabled = false;
       if (r.ok) {
-        try { localStorage.setItem('halSurveyLastPost', String(Date.now())); } catch (e) {}
+        try { localStorage.setItem(SURVEY_KEY, String(Date.now())); } catch (e) {}
         document.getElementById('survey-form').style.display = 'none';
         document.getElementById('done').style.display = 'block';
       } else {
