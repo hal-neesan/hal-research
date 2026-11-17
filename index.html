@@ -304,7 +304,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
   /* ---------- greeting (Hal-neesan) ----------
      Display and sound only. It is always started AFTER the record has been saved, never reads or writes
      state or records, and every call is wrapped so that a failure here can never stop the app. */
-  var GREET_MS = 20000;        /* back to the app by itself after this long */
+  var GREET_MS = 10000;        /* back to the app by itself after this long (20s felt too long in real use; set to 10s on 2026-11-17) */
   var GREET_GUARD_MS = 600;    /* taps this soon after it opens are ignored (a double tap on the button) */
   var AFTER_KIKO = 'home';     /* screen under the return greeting: 'home', or 'done' (today's sales summary) */
   var GREET = {
