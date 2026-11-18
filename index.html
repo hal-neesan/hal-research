@@ -213,21 +213,37 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
 /* links to the board and the survey (bottom of the page) */
 .links { max-width: 480px; margin: 0 auto; padding: 18px 0 30px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .linkbtn { display: inline-flex; align-items: center; min-height: 48px; padding: 0 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel2); color: var(--fg); text-decoration: none; font-weight: 700; font-size: 16px; }
-.flag { margin-left: 8px; background: #d32f2f; color: #fff; border-radius: 8px; padding: 1px 7px; font-size: 12px; font-weight: 700; }
+.flag {
+  --flag-text-color: #fff;             /* 「新着あり」の文字の色 */
+  margin-left: 8px; background: #d32f2f; border-radius: 8px; padding: 1px 7px; font-size: 12px; font-weight: 700;
+  color: var(--flag-text-color);
+}
 .links-note { flex-basis: 100%; margin: 2px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
 .chara { text-align: center; padding: 22px 0 0; }
 .chara img { width: 118px; max-width: 38vw; height: auto; border-radius: 12px; }
 
-/* Hal-neesan greeting. Full screen, in the same light blue as the picture's own background,
-   so the picture has no visible edges in either theme. Display and sound only. */
-.greet { --greet-bg: #CBE6F6; position: fixed; inset: 0; z-index: 50; margin: 0; border: 0; border-radius: 0; overflow: hidden; cursor: pointer;
+/* ---------- Halねえさんの挨拶（出庫・帰庫のあとに、全画面で出る） ----------
+   背景は、キャラ画像の背景と同じ水色にしてあります。
+   こうすると、ダークでもライトでも、画像の四角い縁が目立ちません。
+   色を変えたいときは、下の「--greet-」で始まる3行だけを直せば足ります。 */
+.greet {
+  --greet-bg: #CBE6F6;                 /* 背景の色（キャラ画像の背景と同じ水色） */
+  --greet-text-color: #0d1a27;         /* 挨拶の文字の色 */
+  --greet-hint-text-color: #35506a;    /* 右上の「タップでもどる」の文字の色 */
+  position: fixed; inset: 0; z-index: 50; margin: 0; border: 0; border-radius: 0; overflow: hidden; cursor: pointer;
   padding: calc(44px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-left, 0px)) 0 max(16px, env(safe-area-inset-right, 0px));
-  background: var(--greet-bg); color: #0d1a27; font: inherit; text-align: center;
+  background: var(--greet-bg);
+  color: var(--greet-text-color);
+  font: inherit; text-align: center;
   display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-  animation: greet-in .25s ease-out both; }
+  animation: greet-in .25s ease-out both;
+}
 .greet:focus-visible { outline-offset: -6px; }
 .greet-bar { position: absolute; top: 0; left: 0; right: 0; height: 5px; background: rgba(13, 26, 39, .28); transform-origin: left center; animation: greet-bar 20s linear both; }
-.greet-hint { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); font-size: 13px; font-weight: 700; color: #35506a; }
+.greet-hint {
+  position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: max(14px, env(safe-area-inset-right, 0px)); font-size: 13px; font-weight: 700;
+  color: var(--greet-hint-text-color);
+}
 .greet-bubble { position: relative; max-width: 360px; width: 100%; padding: 16px 22px; border-radius: 22px; background: rgba(255, 255, 255, .92); box-shadow: 0 4px 16px rgba(13, 26, 39, .14); display: flex; flex-direction: column; gap: 2px; }
 .greet-bubble::after { content: ""; position: absolute; left: 50%; bottom: -9px; width: 18px; height: 18px; background: rgba(255, 255, 255, .92); border-radius: 3px; transform: translateX(-50%) rotate(45deg); }
 .greet-line { display: block; font-size: clamp(24px, 7.4vw, 34px); font-weight: 900; line-height: 1.4; text-wrap: balance; animation: greet-text .5s ease-out both; }
@@ -238,7 +254,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
   animation: greet-rise .55s cubic-bezier(.2, .8, .2, 1) both; }
 .greet-img.sway { animation: greet-rise .55s cubic-bezier(.2, .8, .2, 1) both, greet-wave 1.8s ease-in-out .6s infinite; }
 .greet.kiko .greet-img.sway { animation: greet-rise .55s cubic-bezier(.2, .8, .2, 1) both, greet-nod 2.2s ease-in-out .6s infinite; }
-/* phone held sideways: bubble on the left, picture on the right */
+/* スマホを横向きにしたときは、吹き出しを左、キャラを右に並べる */
 @media (orientation: landscape) and (max-height: 520px) {
   .greet { flex-direction: row; align-items: flex-end; justify-content: center; gap: 28px; padding-top: calc(20px + env(safe-area-inset-top, 0px)); }
   .greet-bubble { align-self: center; width: auto; max-width: 380px; }
@@ -253,6 +269,20 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
 @keyframes greet-text { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes greet-bar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
+/* ---------- 控え・復元の画面で使うスタイル ---------- */
+.sech { margin: 0; font-size: 18px; font-weight: 900; }
+.hint-btn {
+  --hint-btn-text-color: var(--muted); /* 「控えを取りませんか」の文字の色 */
+  display: block; width: 100%; min-height: 44px; background: none; border: 0; font-size: 14px; text-decoration: underline;
+  color: var(--hint-btn-text-color);
+}
+.pastebox {
+  --pastebox-text-color: var(--fg);    /* 控え・CSVを貼る欄の文字の色 */
+  width: 100%; min-height: 110px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); padding: 10px;
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px;
+  color: var(--pastebox-text-color);
+}
+
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 </style>
 </head>
@@ -260,7 +290,8 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
 
 <div id="app" class="app"></div>
 
-<!-- Hal-neesan greeting (filled and shown by script; lives outside #app so redraws never restart it) -->
+<!-- Halねえさんの挨拶の枠。中身はスクリプトが入れて表示します。
+     #app の外に置いてあるので、画面が描き直されても、挨拶の動きはやり直しになりません。 -->
 <button type="button" id="greet" class="greet" hidden>
   <span class="greet-bar" id="greet-bar" aria-hidden="true"></span>
   <span class="greet-hint" aria-hidden="true">タップでもどる</span>
@@ -291,40 +322,47 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
     } catch (e) { storageOk = false; }
     return defaults();
   }
-  /* Every change is saved in this browser (localStorage) and nowhere else; no record is ever sent to the operator.
-     updatedAt is kept only so the saved format stays the same as the prototype's. */
+  /* 記録や設定を変えるたびに、このブラウザの中（localStorage）にだけ保存します。運営側に記録が送られることはありません。
+     updatedAt は、試作版と保存の形をそろえておくためだけに残してあります。 */
   function localSave() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { storageOk = false; } }
   function save() { state.updatedAt = Date.now(); localSave(); }
 
   var state = load();
-  var ui = { screen: 'home', overlay: null, draft: null, histTs: Date.now(), doneId: null, csv: null };
+  var ui = { screen: 'home', overlay: null, draft: null, histTs: Date.now(), doneId: null, csv: null, bk: null };
   var lastBanner = '';
   var root = document.getElementById('app');
 
-  /* ---------- greeting (Hal-neesan) ----------
-     Display and sound only. It is always started AFTER the record has been saved, never reads or writes
-     state or records, and every call is wrapped so that a failure here can never stop the app. */
-  var GREET_MS = 10000;        /* back to the app by itself after this long (20s felt too long in real use; set to 10s on 2026-11-17) */
-  var GREET_GUARD_MS = 600;    /* taps this soon after it opens are ignored (a double tap on the button) */
-  var AFTER_KIKO = 'home';     /* screen under the return greeting: 'home', or 'done' (today's sales summary) */
+  /* ---------- Halねえさんの挨拶（出庫・帰庫のあとに出る） ----------
+     ここは「見せる」と「音を鳴らす」だけを受け持ちます。
+     ・必ず、記録を保存したあとに始めます（挨拶のせいで時刻がずれることはありません）。
+     ・記録（state）には、読むのも書くのも一切しません。
+     ・どの処理も try/catch で囲んであるので、ここで失敗しても、アプリ本体は止まりません。 */
+  var GREET_MS = 10000;        /* 挨拶を出しておく時間（ミリ秒）。この時間がたつと、自動でもとの画面に戻る（実機で20秒は長かったので10秒） */
+  var GREET_GUARD_MS = 600;    /* 挨拶が出た直後、この時間（ミリ秒）のタップは無視する（出庫ボタンを2回押しても、すぐ閉じないように） */
+  var AFTER_KIKO = 'home';     /* 帰庫の挨拶が終わったあとに出す画面。'home'＝メイン画面、'done'＝今日の売上の画面 */
   var GREET = {
     shukko: { src: 'voice_shukko.mp3', video: null, lines: [['安全運転で', 'いってらっしゃい。']] },
     kiko:   { src: 'voice_kiko.mp3',   video: null, lines: [['おつかれさまでした。'], ['おかえりなさい。']] }
-    /* lines: one array per line, one string per phrase (a line breaks only between phrases).
-       video: set to e.g. 'hal-shukko.mp4' / 'hal-kiko.mp4' once those files exist; null = the still picture with CSS motion */
+    /* src   ：鳴らす音声ファイル（index.html と同じ場所に置く）
+       lines ：出す文字。「1行＝1つの配列」で、配列の中は「ひとまとまりの言葉」ごとに分けてある。
+               （行が折り返すときは、言葉のまとまりの切れ目でだけ折り返すため）
+       video ：動画を使うときだけ 'hal-shukko.mp4' などと書く。null のあいだは、静止画にCSSで動きを付ける */
   };
-  var LINE_AT = 0.3, LINE_STEP = 1.4;   /* seconds: when the first line appears, and the gap to the next one */
+  var LINE_AT = 0.3, LINE_STEP = 1.4;   /* 文字が出る時刻（秒）。1行目は0.3秒後、2行目はそこから1.4秒あとに出る */
   var VOICE = {}, greetTimer = null, greetOpenedAt = 0;
 
+  /* 音声ファイルを用意する（最初の1回だけ作って、使い回す）。作れなかったときは null を返す */
   function voiceFor(kind) {
     try {
       if (!VOICE[kind]) { var a = new Audio(GREET[kind].src); a.preload = 'auto'; VOICE[kind] = a; }
       return VOICE[kind];
     } catch (e) { return null; }
   }
+  /* 鳴っている音声を、すべて止めて先頭に戻す */
   function stopVoices() {
     Object.keys(VOICE).forEach(function (k) { try { VOICE[k].pause(); VOICE[k].currentTime = 0; } catch (e) {} });
   }
+  /* 挨拶を閉じる（画面を隠して、音も止める） */
   function greetClose() {
     try {
       clearTimeout(greetTimer);
@@ -333,6 +371,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
       var v = document.getElementById('greet-video'); if (v) v.remove();
     } catch (e) {}
   }
+  /* 挨拶を開く。kind は 'shukko'（出庫）か 'kiko'（帰庫）。文字を入れ、音を鳴らし、時間がきたら閉じる予約をする */
   function greetOpen(kind) {
     try {
       var g = GREET[kind], el = document.getElementById('greet'), tx = document.getElementById('greet-text');
@@ -342,7 +381,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
       g.lines.forEach(function (line, i) {
         var p = document.createElement('span');
         p.className = 'greet-line'; p.style.animationDelay = (LINE_AT + i * LINE_STEP) + 's';
-        line.forEach(function (ph) { var q = document.createElement('span'); q.className = 'greet-ph'; q.textContent = ph; p.appendChild(q); });  /* a line only breaks between phrases */
+        line.forEach(function (ph) { var q = document.createElement('span'); q.className = 'greet-ph'; q.textContent = ph; p.appendChild(q); });  /* 言葉のまとまりごとに入れる（折り返しは、まとまりの切れ目だけ） */
         tx.appendChild(p);
       });
       var img = document.getElementById('greet-img'), stage = document.getElementById('greet-stage');
@@ -476,7 +515,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
     if (!M.cur || !M.targetReturn) return '—';
     return (sameDay(M.targetReturn, M.cur.s) ? '' : '翌') + clock(M.targetReturn);
   }
-  /* the 翌 prefix stays small so the clock never wraps */
+  /* 「翌」は小さい文字にして、時刻が途中で折り返さないようにする */
   function returnHtml(M) { var t = returnText(M); return t.charAt(0) === '翌' ? '<i>翌</i>' + t.slice(1) : t; }
   function restLeftText(M) {
     var left = M.reqRest - M.curRest;
@@ -533,7 +572,8 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
       '<div><small>今日の帰庫目標</small><span class="v"><b id="a-ret">' + returnHtml(M) + '</b></span></div></div>' +
       actionView(M) +
       '<p class="foot">試用版 ・ ' + (storageOk ? '記録はこのスマホの中にだけ保存されます。間違えても、履歴から直せます。'
-        : 'このブラウザでは記録を保存できません。閉じると消えます。') + '</p>';
+        : 'このブラウザでは記録を保存できません。閉じると消えます。') + '</p>' +
+      (needBackupHint(M.now) ? '<button class="hint-btn" data-act="go-backup">控えを取りませんか</button>' : '');
   }
 
   function setupView(M) {
@@ -559,7 +599,25 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
       '<div class="f"><span class="lab" id="th-lab">画面の色</span><div class="seg" role="radiogroup" aria-labelledby="th-lab">' + themes + '</div></div>' +
       '<p class="err" role="alert">' + (d.err || '') + '</p>' +
       '<button class="btn go" data-act="setup-save">保存してホームへ</button></div>' +
+      '<button class="btn ghost sm" data-act="go-backup">控えを取る／控えから戻す</button>' +
       '<button class="btn ghost sm" data-act="reset-ask">記録を全部消す</button>';
+  }
+
+  /* 「控え」の画面を作る（上が控えを取る欄、下が控えから戻す欄） */
+  function backupView() {
+    var b = ui.bk, last = lastBackupAt();
+    var made = b.made ? '<p class="note">' + b.msg + '</p><textarea id="bk-out" class="pastebox" readonly aria-label="控えの文字列">' + esc(b.made) + '</textarea>' : '';
+    return '<div class="bar"><button class="chip" data-act="go-home">← ホーム</button><h1>控え</h1></div>' +
+      '<p class="note">' + (last ? '最後に控えを取った日：' + dj(last) : 'まだ控えを取っていません。') + '　ブラウザのデータが消えたときに、ここから戻せます。</p>' +
+      '<div class="form"><h2 class="sech">控えを取る</h2>' +
+      '<p class="note">設定と全部の記録を、1つの文字列にします。メモやメールに貼って、アプリの外に保管してください。</p>' +
+      '<button class="btn go sm" data-act="bk-make">控えを作ってコピー</button>' + made + '</div>' +
+      '<div class="form"><h2 class="sech">控えから戻す</h2>' +
+      '<p class="note">控えの文字列を貼り付けてください。戻す前に、件数と期間を確認します。同じ日付の記録がある日は、上書きせずに飛ばします。</p>' +
+      '<textarea id="bk-paste" class="pastebox" placeholder="ここに控えを貼り付け" aria-label="控えの文字列を貼り付け">' + esc(b.text) + '</textarea>' +
+      '<p class="err" role="alert">' + (b.err || '') + '</p>' +
+      '<button class="btn ghost sm" data-act="bk-check">内容を確認する</button></div>' +
+      '<p class="note">CSVの読み込みは、履歴画面にあります。ただしCSVでは、設定と休憩の開始・終了は戻りません。完全に戻せるのは「控え」です。</p>';
   }
 
   function rowHtml(r, now) {
@@ -590,7 +648,9 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
       '<div class="sum"><div><small>乗務</small><b>' + n + '<i>回</i></b></div><div><small>売上合計</small><b>' + yen(tS) + '<i>円</i></b></div>' +
       '<div><small>時間あたり</small><b>' + (avg == null ? '—' : yen(avg) + '<i>円</i>') + '</b></div></div>' +
       '<div class="rows">' + rows + '</div>' +
-      '<div class="two"><button class="btn ghost sm" data-act="add-rec">記録を追加</button><button class="btn ghost sm" data-act="csv">CSVをコピー</button></div>' + csv;
+      '<div class="two"><button class="btn ghost sm" data-act="add-rec">記録を追加</button><button class="btn ghost sm" data-act="csv">CSVをコピー</button></div>' +
+      '<button class="btn ghost sm" data-act="csv-in-open">CSVを読み込む</button>' +
+      '<p class="note">完全に戻したいときは、設定の「控えから戻す」を使ってください。CSVでは設定と休憩の開始・終了は戻りません。</p>' + csv;
   }
 
   function doneView() {
@@ -611,6 +671,18 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
       return '<div class="scrim"><div class="sheet" role="dialog" aria-modal="true"><h2>' + o.title + '</h2><p>' + o.body + '</p>' +
         '<button class="btn ' + (o.kind || 'go') + '" data-act="confirm-ok">' + o.ok + '</button>' +
         '<button class="btn ghost sm" data-act="confirm-cancel">' + (o.cancel || 'やめる') + '</button></div></div>';
+    }
+    if (o.type === 'info') {
+      return '<div class="scrim"><div class="sheet" role="dialog" aria-modal="true"><h2>' + o.title + '</h2><p>' + o.body + '</p>' +
+        '<button class="btn go" data-act="info-ok">とじる</button></div></div>';
+    }
+    if (o.type === 'csvin') {
+      return '<div class="scrim"><div class="sheet" role="dialog" aria-modal="true"><h2>CSVを読み込む</h2>' +
+        '<p class="note">「CSVをコピー」で書き出したものを貼り付けてください。設定と、休憩の開始・終了は戻りません（休憩は合計分だけ）。完全に戻したいときは、設定の「控え」から。</p>' +
+        '<textarea id="csv-paste" class="pastebox" placeholder="ここにCSVを貼り付け" aria-label="CSVを貼り付け">' + esc(o.text) + '</textarea>' +
+        '<p class="err" role="alert">' + (o.err || '') + '</p>' +
+        '<button class="btn go sm" data-act="csvin-check">内容を確認する</button>' +
+        '<button class="btn ghost sm" data-act="confirm-cancel">閉じる</button></div></div>';
     }
     if (o.type === 'sales') {
       var r = state.records.find(function (x) { return x.id === o.id; });
@@ -651,6 +723,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
     else if (ui.screen === 'setup') h = setupView(M);
     else if (ui.screen === 'history') h = historyView(M);
     else if (ui.screen === 'done') h = doneView();
+    else if (ui.screen === 'backup') h = backupView();
     root.innerHTML = h + overlayView(M);
     if (ui.screen === 'setup') updateHint();
     window.scrollTo(0, 0);
@@ -701,6 +774,208 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
   }
   function curRec() { return state.records.find(function (r) { return r.e == null; }) || null; }
 
+  /* ---------- 控え（バックアップ）と、控えから戻す機能 ----------
+     「控え」は、月初の設定と全部の記録を、1つの長い文字列にしたものです。
+     メモやメールに貼って、アプリの外に保管しておきます。
+     ブラウザのデータが消えたときは、その文字列を貼り付けて戻します。
+     ※ アプリ本体の保存形式（localStorage のキーと、中身の作り）は、変えていません。
+       「最後に控えを取った日」だけは、別のキー（BK_KEY）に分けて保存します。 */
+  var BK_KEY = KEY + '-backup';        /* 最後に控え（またはCSVのコピー）を取った時刻を入れておく保存先の名前 */
+  var BK_DAYS = 14;                    /* 最後の控えから、この日数がたったら「控えを取りませんか」を出す */
+  /* 最後に控えを取った時刻（ミリ秒）を返す。取ったことがなければ 0 */
+  function lastBackupAt() { try { return Number(localStorage.getItem(BK_KEY)) || 0; } catch (e) { return 0; } }
+  /* 「いま控えを取った」と記録する */
+  function markBackup() { try { localStorage.setItem(BK_KEY, String(Date.now())); } catch (e) {} }
+  /* 「控えを取りませんか」を出すか？ 記録が1件以上あって、最後の控えから14日以上たっていれば true */
+  function needBackupHint(now) { return state.records.length > 0 && now - lastBackupAt() >= BK_DAYS * 24 * HOUR; }
+  /* 画面に文字を入れるとき、< > & を無害な形に直す（貼り付けた文字が、画面の部品として動いてしまわないように） */
+  function esc(t) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  /* 時刻（ミリ秒）を「2026/11/17」の形の文字にする */
+  function dj(ms) { var d = new Date(ms); return d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate(); }
+  /* 「ふつうの数」か？（文字や、無限大・非数ではない） */
+  function okNum(x) { return typeof x === 'number' && isFinite(x); }
+
+  /* 文字列が途中で変わっていないか調べるための「検査用の値」(CRC32)を作る。表は最初に使うときに1回だけ作る */
+  var CRC_T = null;
+  function crc32(str) {
+    if (!CRC_T) {
+      CRC_T = [];
+      for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); CRC_T[n] = c >>> 0; }
+    }
+    var crc = 0xFFFFFFFF;
+    for (var i = 0; i < str.length; i++) crc = CRC_T[(crc ^ str.charCodeAt(i)) & 255] ^ (crc >>> 8);
+    return ((crc ^ 0xFFFFFFFF) >>> 0).toString(16).padStart(8, '0');
+  }
+  /* 半角の文字列を、メールやメモで壊れにくい文字（英数字と - _ だけ）に変える（base64url） */
+  function toB64u(ascii) { return btoa(ascii).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  /* toB64u の逆。もとの文字列に戻す */
+  function fromB64u(b) { b = b.replace(/-/g, '+').replace(/_/g, '/'); while (b.length % 4) b += '='; return atob(b); }
+
+  /* 控えの文字列の作り方：  HALBK1.<長さ>.<検査用の値>.<中身>
+     ・「長さ」と「検査用の値」があるので、途中で切れた文字列や、一部が変わった文字列を見分けられます。
+     ・中身は「長さ」の分だけを読むので、メールやメモが途中に入れた改行や、後ろに付いた文章があっても大丈夫です。
+     ・テーマ（ダーク/ライト）は、控えに入れません（月初の設定と、全部の記録だけ）。 */
+  function makeBackup() {
+    var o = { app: 'hal-jomu', fmt: 1, at: Date.now(), closing: state.closing, periods: state.periods, lastCfg: state.lastCfg, records: state.records };
+    var json = JSON.stringify(o).replace(/[\u007f-￿]/g, function (ch) { return '\\u' + ('0000' + ch.charCodeAt(0).toString(16)).slice(-4); });
+    var body = toB64u(json);
+    return 'HALBK1.' + body.length + '.' + crc32(body) + '.' + body;
+  }
+  /* 貼り付けられた文字列を読んで中身を取り出す。成功なら { data: ... }、失敗なら { err: '理由' } を返す */
+  function parseBackup(text) {
+    var t = String(text || ''), i = t.indexOf('HALBK1.');
+    if (i < 0) return { err: '控えの文字列ではないようです。「HALBK1.」で始まる文字列を、全部貼り付けてください。' };
+    var m = /^HALBK1\.(\d{1,8})\.([0-9a-f]{8})\./.exec(t.slice(i));
+    if (!m) return { err: '控えの文字列の先頭が壊れています。もう一度、全部コピーして貼り付けてください。' };
+    var len = parseInt(m[1], 10), rest = t.slice(i + m[0].length), body = '', j = 0;
+    while (body.length < len && j < rest.length) {
+      var ch = rest.charAt(j++);
+      if (/\s/.test(ch)) continue;
+      if (!/[A-Za-z0-9_-]/.test(ch)) break;
+      body += ch;
+    }
+    if (len < 1 || body.length < len) return { err: '控えの文字列が途中で切れているようです。最後まで全部コピーして貼り付けてください。' };
+    if (crc32(body) !== m[2]) return { err: '控えの文字列が壊れています（一部が変わっています）。元の控えをもう一度コピーしてください。' };
+    var data;
+    try { data = JSON.parse(fromB64u(body)); } catch (e) { return { err: '控えの中身を読めませんでした。' }; }
+    if (!data || data.app !== 'hal-jomu' || data.fmt !== 1 || !Array.isArray(data.records)) return { err: 'この形式の控えには対応していません。' };
+    return { data: data };
+  }
+  /* 記録を1件ずつ検査して、安全な形に作り直す。
+     おかしな記録（数でない、終わりが始まりより前、など）は null を返して、取り込まない。
+     貼り付けられた文字列の余計な項目が、アプリの中に入り込まないようにするため、必要な項目だけを写し取る。 */
+  function cleanRecord(r) {
+    if (!r || typeof r !== 'object') return null;
+    if (!okNum(r.s) || r.s < 946684800000 || r.s > 4102444800000) return null;
+    if (r.e != null && (!okNum(r.e) || r.e <= r.s)) return null;
+    if (r.sales != null && (!okNum(r.sales) || r.sales < 0)) return null;
+    if (r.restOv != null && (!okNum(r.restOv) || r.restOv < 0)) return null;
+    var br = [];
+    if (r.br != null) {
+      if (!Array.isArray(r.br)) return null;
+      for (var i = 0; i < r.br.length; i++) {
+        var b = r.br[i];
+        if (!b || !okNum(b.s) || (b.e != null && !okNum(b.e))) return null;
+        br.push({ s: b.s, e: b.e == null ? null : b.e });
+      }
+    }
+    return { id: typeof r.id === 'string' ? r.id : '', s: r.s, e: r.e == null ? null : r.e, br: br,
+      sales: r.sales == null ? null : Math.round(r.sales), restOv: r.restOv == null ? null : r.restOv };
+  }
+  /* 月初の設定1つ分（日数・リミット・休憩・目標）を検査する。おかしければ null */
+  function cleanCfg(c) {
+    if (!c || typeof c !== 'object') return null;
+    if (!(okNum(c.days) && c.days >= 1 && c.days <= 31 && okNum(c.limitH) && c.limitH > 0 && c.limitH <= 744 &&
+          okNum(c.restH) && c.restH >= 0 && c.restH <= 24 && okNum(c.target) && c.target >= 0)) return null;
+    return { type: PRESET[c.type] ? c.type : 'kakujitsu', days: c.days, limitH: c.limitH, restH: c.restH, target: c.target };
+  }
+  /* 控えの中の設定（締め日・期間ごとの設定・直近の設定）をまとめて検査する。使えるものがなければ null */
+  function cleanSettings(d) {
+    var cl = (okNum(d.closing) && d.closing >= 0 && d.closing <= 28 && Math.floor(d.closing) === d.closing) ? d.closing : null;
+    var periods = {}, n = 0;
+    if (d.periods && typeof d.periods === 'object') {
+      Object.keys(d.periods).forEach(function (k) { var c = /^\d{4}-\d{2}-\d{2}$/.test(k) ? cleanCfg(d.periods[k]) : null; if (c) { periods[k] = c; n++; } });
+    }
+    var last = cleanCfg(d.lastCfg);
+    if (cl == null && !n && !last) return null;
+    return { closing: cl == null ? state.closing : cl, periods: periods, lastCfg: last };
+  }
+  /* いまこの端末に記録がある日付の一覧を作る（同じ日付の記録は上書きせず飛ばすため） */
+  function existingDates() {
+    var have = {}; state.records.forEach(function (r) { have[ymd(new Date(r.s))] = 1; }); return have;
+  }
+  /* 記録のIDが安全な文字だけで、しかも他と重ならないようにする。だめなら新しいIDに付け替える */
+  function takeId(r, seen) {
+    if (!/^[A-Za-z0-9_-]{1,40}$/.test(r.id) || seen[r.id]) { do { r.id = uid(); } while (seen[r.id]); }
+    seen[r.id] = 1;
+  }
+
+  /* 「戻したら、こうなる」を、実際には何も変えずに調べる（確認画面に出す件数のため）。
+     ・同じ日付の記録がこの端末にすでにあれば、上書きせずに飛ばす。
+     ・この端末がすでに乗務中なら、控えの中の「乗務中」の記録は飛ばす（乗務中が2つにならないように）。
+     ・設定は、この端末にまだ設定が1つもないときだけ戻す（すでにあるものは上書きしない）。 */
+  function planBackup(data) {
+    var have = existingDates(), seen = {}, onDuty = !!curRec();
+    state.records.forEach(function (r) { seen[r.id] = 1; });
+    var p = { add: [], dup: 0, bad: 0, busy: 0, total: data.records.length, lo: Infinity, hi: -Infinity, cfg: null, emptyCfg: false };
+    data.records.forEach(function (raw) {
+      var r = cleanRecord(raw);
+      if (!r) { p.bad++; return; }
+      p.lo = Math.min(p.lo, r.s); p.hi = Math.max(p.hi, r.s);
+      if (have[ymd(new Date(r.s))]) { p.dup++; return; }
+      if (r.e == null) { if (onDuty) { p.busy++; return; } onDuty = true; }
+      takeId(r, seen); p.add.push(r);
+    });
+    p.emptyCfg = !Object.keys(state.periods).length && !state.lastCfg;
+    if (p.emptyCfg) p.cfg = cleanSettings(data);
+    return p;
+  }
+  /* planBackup で調べた内容を、実際に反映して保存する */
+  function applyBackup(p) {
+    state.records = state.records.concat(p.add);
+    if (p.cfg) { state.closing = p.cfg.closing; state.periods = p.cfg.periods; state.lastCfg = p.cfg.lastCfg; }
+    save();
+  }
+  /* 確認画面（done=false）と結果画面（done=true）に出す、件数の説明文を作る（数字と決まった文だけを使う） */
+  function bkText(p, done) {
+    var h = (done ? '' : '控えの内容：記録 ' + p.total + '件' + (p.lo === Infinity ? '' : '（' + dj(p.lo) + '〜' + dj(p.hi) + '）') + '<br>') +
+      (done ? '戻した記録：' : '戻す記録：') + p.add.length + '件<br>飛ばした（同じ日付の記録がこの端末にある）：' + p.dup + '件';
+    if (p.busy) h += '<br>飛ばした（乗務中の記録が重なる）：' + p.busy + '件';
+    if (p.bad) h += '<br>飛ばした（読めない記録）：' + p.bad + '件';
+    h += '<br>設定：' + (p.cfg ? (done ? '戻しました' : '戻します（この端末にまだ設定がないため）')
+      : (p.emptyCfg ? '控えに設定はありません' : 'この端末の設定をそのまま使います（上書きしません）'));
+    return h;
+  }
+
+  /* ---------- CSVの読み込み（「CSVをコピー」で書き出したもの） ----------
+     戻せるのは、日付・出庫と帰庫の時刻・売上・休憩の合計分です。
+     CSVには、月初の設定と、休憩ごとの開始・終了が入っていないので、それらは戻りません。
+     「時間あたり売上」は、アプリが計算し直します。 */
+  /* 数字だけの文字（例 "540"）を数にする。数字以外が混ざっていれば null */
+  function intOrNull(x) { return /^\d+$/.test(x) ? parseInt(x, 10) : null; }
+  /* CSVの1行（区切って配列にしたもの）を、1件の記録に直す。読めない行は null */
+  function csvRow(f) {
+    if (f.length < 7) return null;
+    var dm = /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/.exec(f[0]), tm = /^(\d{1,2}):(\d{2})$/.exec(f[1]), em = /^(\d{1,2}):(\d{2})$/.exec(f[2]);
+    if (!dm || !tm || !em) return null;            /* 帰庫の時刻が空の行（乗務中）は取り込まない */
+    var Y = +dm[1], Mo = +dm[2], D = +dm[3];
+    if (+tm[1] > 23 || +tm[2] > 59 || +em[1] > 23 || +em[2] > 59) return null;
+    var d0 = new Date(Y, Mo - 1, D, +tm[1], +tm[2], 0, 0);
+    if (d0.getFullYear() !== Y || d0.getMonth() !== Mo - 1 || d0.getDate() !== D || Y < 2000 || Y > 2100) return null;
+    var kos = intOrNull(f[3]), rest = intOrNull(f[4]);
+    if (kos == null || rest == null || kos <= 0 || kos > 48 * 60 || rest > kos) return null;
+    var sales = null;
+    if (f[6] !== '') { sales = intOrNull(f[6]); if (sales == null) return null; }
+    var st = d0.getTime(), e = new Date(Y, Mo - 1, D, +em[1], +em[2], 0, 0).getTime();
+    while (e <= st) e += 24 * HOUR;                /* 帰庫の時刻が出庫より前に見えるときは、日付をまたいだ（翌日）ということ */
+    if (Math.abs((e - st) / MIN - kos) > 2) return null;   /* 時刻から出した長さと、拘束(分)の列が合わない行は、壊れた行として飛ばす */
+    return { id: '', s: st, e: e, br: [], sales: sales, restOv: rest };
+  }
+  /* 貼り付けられたCSV全体を調べる。実際には何も変えず、読める記録・飛ばす行の数を返す */
+  function planCsv(text) {
+    var have = existingDates(), seen = {};
+    state.records.forEach(function (r) { seen[r.id] = 1; });
+    var p = { add: [], dup: 0, bad: 0, rows: 0, lo: Infinity, hi: -Infinity };
+    String(text || '').replace(/^﻿/, '').split(/\r\n|\n|\r/).forEach(function (ln) {
+      ln = ln.trim(); if (!ln) return;
+      var f = ln.split(/[,\t]/).map(function (x) { return x.trim().replace(/^"(.*)"$/, '$1'); });
+      if (f[0] === '日付') return;                  /* 見出しの行（「日付,出庫,...」）は数えない */
+      p.rows++;
+      var r = csvRow(f);
+      if (!r) { p.bad++; return; }
+      p.lo = Math.min(p.lo, r.s); p.hi = Math.max(p.hi, r.s);
+      if (have[ymd(new Date(r.s))]) { p.dup++; return; }
+      takeId(r, seen); p.add.push(r);
+    });
+    return p;
+  }
+  /* CSVの確認画面（done=false）と結果画面（done=true）に出す説明文を作る */
+  function csvText(p, done) {
+    return (done ? '' : 'CSVの内容：' + p.rows + '行' + (p.lo === Infinity ? '' : '（' + dj(p.lo) + '〜' + dj(p.hi) + '）') + '<br>') +
+      (done ? '読み込んだ記録：' : '読み込む記録：') + p.add.length + '件<br>飛ばした（同じ日付の記録がこの端末にある）：' + p.dup + '件<br>' +
+      '飛ばした（読めない行・乗務中の行）：' + p.bad + '件<br>戻らないもの：設定と、休憩の開始・終了（休憩は合計分だけ入ります）';
+  }
+
   /* ---------- actions ---------- */
   function act(a, el) {
     var o = ui.overlay, now = Date.now(), M, cur, r;
@@ -709,7 +984,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
         if (curRec()) break;
         state.records.push({ id: uid(), s: now, e: null, br: [], sales: null, restOv: null });
         save();
-        greetOpen('shukko');   /* after the record is saved; the time above was fixed at the tap */
+        greetOpen('shukko');   /* 記録の保存が終わってから挨拶を出す（出庫の時刻は、押した瞬間に決まっている） */
         break;
       case 'break-start':
         cur = curRec(); if (cur && !(cur.br.length && cur.br[cur.br.length - 1].e == null)) { cur.br.push({ s: now, e: null }); save(); }
@@ -732,7 +1007,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
         };
         break;
       case 'confirm-ok': var f = o && o.run; ui.overlay = null; if (f) f(); break;
-      case 'confirm-cancel': ui.overlay = null; break;
+      case 'confirm-cancel': ui.overlay = (o && o.back) || null; break;
       case 'pending-sales': M = compute(now); if (M.pending) ui.overlay = { type: 'sales', id: M.pending.id, val: '' }; break;
       case 'key':
         if (!o || o.type !== 'sales') break;
@@ -745,7 +1020,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
         r = state.records.find(function (x) { return x.id === o.id; });
         if (r) { r.sales = parseInt(o.val, 10); save(); ui.doneId = r.id; ui.screen = (o.fromStop && AFTER_KIKO === 'home') ? 'home' : 'done'; }
         ui.overlay = null;
-        if (r && o.fromStop) greetOpen('kiko');   /* only right after a return, not when filling in an old shift's sales */
+        if (r && o.fromStop) greetOpen('kiko');   /* 帰庫の直後だけ挨拶を出す（過去の乗務の売上を後から入れるときは出さない） */
         break;
       case 'sales-later':
         var fromStop = !!(o && o.fromStop);
@@ -764,9 +1039,50 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
         var text = csvFor(periodFor(ui.histTs));
         var fallback = function () { ui.csv = { text: text, msg: '自動でコピーできませんでした。下の文字を選んでコピーしてください。' }; render(); var b = document.getElementById('csv-box'); if (b) { b.focus(); b.select(); } };
         if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(function () { ui.csv = { text: text, msg: 'コピーしました。表計算ソフトやメモに貼り付けてください。' }; render(); }, fallback);
+          navigator.clipboard.writeText(text).then(function () { ui.csv = { text: text, msg: 'コピーしました。表計算ソフトやメモに貼り付けてください。' }; markBackup(); render(); }, fallback);
         } else fallback();
         return;
+      case 'go-backup': ui.bk = { text: '', made: '', msg: '', err: '' }; ui.screen = 'backup'; ui.overlay = null; break;
+      case 'bk-make':
+        var bs = makeBackup(); ui.bk.made = bs; ui.bk.err = ''; markBackup();
+        var bkFallback = function () { ui.bk.msg = '自動でコピーできませんでした。下の文字を選んでコピーしてください。'; render(); var bo = document.getElementById('bk-out'); if (bo) { bo.focus(); bo.select(); } };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(bs).then(function () { ui.bk.msg = 'コピーしました。メモやメールに貼って保管してください。'; render(); }, bkFallback);
+        } else bkFallback();
+        return;
+      case 'bk-check':
+        var pb = parseBackup(ui.bk.text);
+        if (pb.err) { ui.bk.err = pb.err; break; }
+        ui.bk.err = '';
+        var pl = planBackup(pb.data);
+        if (!pl.add.length && !pl.cfg) {
+          ui.overlay = { type: 'info', title: '戻せるものがありませんでした', body: bkText(pl, false) };
+        } else {
+          ui.overlay = {
+            type: 'confirm', title: 'この控えから戻しますか？', kind: 'go', ok: '戻す', cancel: 'やめる', body: bkText(pl, false),
+            run: function () {
+              var p2 = planBackup(pb.data); applyBackup(p2);
+              ui.bk.text = ''; ui.overlay = { type: 'info', title: '戻しました', body: bkText(p2, true) };
+            }
+          };
+        }
+        break;
+      case 'csv-in-open': ui.overlay = { type: 'csvin', text: '', err: '' }; break;
+      case 'csvin-check':
+        var csvT = o.text, pc = planCsv(csvT);
+        if (!pc.rows) { o.err = '読み込める行がありません。「CSVをコピー」で書き出したものを貼り付けてください。'; break; }
+        if (!pc.add.length) { ui.overlay = { type: 'info', title: '読み込める記録がありませんでした', body: csvText(pc, false), back: { type: 'csvin', text: csvT, err: '' } }; break; }
+        ui.overlay = {
+          type: 'confirm', title: 'このCSVを読み込みますか？', kind: 'go', ok: '読み込む', cancel: 'もどる', body: csvText(pc, false),
+          back: { type: 'csvin', text: csvT, err: '' },
+          run: function () {
+            var p2 = planCsv(csvT);
+            state.records = state.records.concat(p2.add); save();
+            ui.overlay = { type: 'info', title: '読み込みました', body: csvText(p2, true) };
+          }
+        };
+        break;
+      case 'info-ok': ui.overlay = (o && o.back) || null; break;
       case 'edit': ui.overlay = { type: 'edit', id: el.dataset.id, err: '' }; break;
       case 'add-rec': ui.overlay = { type: 'edit', id: null, err: '' }; break;
       case 'edit-cancel': ui.overlay = null; break;
@@ -854,6 +1170,8 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
   });
   function onField(e) {
     var d = ui.draft, id = e.target.id;
+    if (id === 'bk-paste' && ui.bk) { ui.bk.text = e.target.value; return; }
+    if (id === 'csv-paste' && ui.overlay && ui.overlay.type === 'csvin') { ui.overlay.text = e.target.value; return; }
     if (ui.screen !== 'setup' || !d) return;
     if (id === 's-days') d.days = e.target.value;
     else if (id === 's-limit') d.limitH = e.target.value;
@@ -866,7 +1184,7 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
   root.addEventListener('input', onField);
   root.addEventListener('change', onField);
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) { greetClose(); return; }   /* leaving the app silences the greeting */
+    if (document.hidden) { greetClose(); return; }   /* 別のアプリに移ったときは、挨拶を閉じて音も止める */
     if (!ui.overlay && ui.screen === 'home') render();
   });
   setInterval(live, 1000);
@@ -882,8 +1200,8 @@ input[type="number"] { font-family: var(--font-num); font-variant-numeric: tabul
   <p class="links-note">感想・質問は掲示板へ、6問の回答はアンケートへ</p>
 </nav>
 <script>
-  /* New-post flag (spec section 5). This only asks the board for its newest post time; nothing is sent.
-     Section 9: if the request fails for any reason, show nothing and let the app run as usual. */
+  /* 新着フラッグ（仕様書§5）。掲示板の「いちばん新しい投稿の時刻」を問い合わせるだけで、こちらからは何も送りません。
+     仕様書§9：問い合わせが何らかの理由で失敗したときは、何も表示せず、アプリは普通に動かします。 */
   (function () {
     try {
       var SB_URL = 'https://fffjfvoxjddsqnofclop.supabase.co';
