@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>使い方マニュアル | Halねえさんの乗務手帳（リサーチ版）</title>
+<meta name="description" content="タクシードライバーの乗務と売上管理をお手伝いする簡単アプリ『Halねえさんの乗務手帳』の使い方マニュアル。最初の設定、出庫から帰庫まで、控え（バックアップ）の取り方を、大きな字で説明します。">
+<script>
+/* Theme: follow the setting the app saved in this browser (same origin). */
+(function () {
+  var t = 'dark';
+  try {
+    var o = JSON.parse(localStorage.getItem('uriage-jomu-v1') || 'null');
+    if (o && (o.theme === 'dark' || o.theme === 'light' || o.theme === 'auto')) t = o.theme;
+  } catch (e) {}
+  if (t !== 'auto') document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Noto+Sans+JP:wght@500;700;900&display=swap">
+<style>
+/* Same colour tokens as index.html / board.html (dark first, light override). */
+:root {
+  --bg: #0b1219; --panel: #141f2a; --panel2: #1b2a38; --line: #2b3d50;
+  --fg: #f2f6fa; --muted: #9db0c3;
+  --go: #2fbf71; --go-ink: #03210f; --go-text: #5ee0a0;
+  --warn: #f5b82e; --bubble: #ffffff; --bubble-ink: #0d1a27;
+  --font-body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #eef3f8; --panel: #ffffff; --panel2: #e4ecf4; --line: #c6d3e0;
+    --fg: #0d1a27; --muted: #4c6178;
+    --go: #1c9a58; --go-ink: #ffffff; --go-text: #0f7a40;
+    --warn: #f1b21c;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #eef3f8; --panel: #ffffff; --panel2: #e4ecf4; --line: #c6d3e0;
+  --fg: #0d1a27; --muted: #4c6178;
+  --go: #1c9a58; --go-ink: #ffffff; --go-text: #0f7a40;
+  --warn: #f1b21c;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 18px; line-height: 1.7;
+  padding-block: calc(12px + env(safe-area-inset-top, 0px)) calc(40px + env(safe-area-inset-bottom, 0px));
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-text-size-adjust: 100%;
+}
+.wrap { max-width: 680px; margin: 0 auto; }
+a { color: var(--go-text); }
+.back { display: inline-block; margin-bottom: 8px; font-size: 16px; text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; color: var(--fg); background: var(--panel); }
+h1 { font-size: 30px; line-height: 1.3; margin: 8px 0 4px; font-weight: 900; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+h2.sec {
+  font-size: 24px; font-weight: 900; margin: 36px 0 12px;
+  border-left: 8px solid var(--go); padding-left: 12px; line-height: 1.4;
+}
+.panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+  padding: 18px 18px 14px; margin: 0 0 16px;
+}
+.panel .no {
+  display: inline-block; background: var(--go); color: var(--go-ink);
+  font-weight: 900; border-radius: 999px; padding: 2px 14px; font-size: 17px; margin-bottom: 8px;
+}
+.panel p { margin: 6px 0; font-size: 19px; }
+.panel .small { font-size: 16px; color: var(--muted); }
+.hal { display: flex; gap: 12px; align-items: flex-start; margin: 10px 0 4px; }
+.hal img { width: 72px; height: 72px; object-fit: cover; border-radius: 50%; flex: none; background: #CBE6F6; }
+.bubble {
+  position: relative; background: var(--bubble); color: var(--bubble-ink);
+  border-radius: 16px; padding: 10px 16px; font-weight: 700; font-size: 18px; line-height: 1.55;
+}
+.bubble::before {
+  content: ""; position: absolute; left: -8px; top: 22px; width: 16px; height: 16px;
+  background: var(--bubble); transform: rotate(45deg); border-radius: 3px;
+}
+.btnname {
+  display: inline-block; background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 1px 12px; font-weight: 900; white-space: nowrap;
+}
+.btnname.go { background: var(--go); color: var(--go-ink); border-color: transparent; }
+.caution { border-left: 8px solid var(--warn); }
+.caution .no { background: var(--warn); color: #231a00; }
+.shot { display: block; width: 100%; max-width: 340px; margin: 12px auto 6px; border: 1px solid var(--line); border-radius: 14px; }
+ul.tight { margin: 6px 0; padding-left: 22px; }
+ul.tight li { margin: 4px 0; font-size: 18px; }
+footer { margin-top: 40px; color: var(--muted); font-size: 15px; }
+footer nav a { margin-right: 16px; }
+@media print {
+  body { background: #fff; color: #000; }
+  .panel { border-color: #999; break-inside: avoid; }
+  .back { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<a class="back" href="./">← アプリにもどる</a>
+<h1>使い方マニュアル</h1>
+<p class="sub">Halねえさんの乗務手帳（リサーチ版）</p>
+
+<div class="hal">
+  <img src="hal-neesan.png" alt="Halねえさん">
+  <div class="bubble">はじめまして、Halねえさんです。使い方は、とても簡単ですよ。ボタンを押して、売上を入れるだけです。</div>
+</div>
+
+<h2 class="sec">1. 最初の設定（1回だけ）</h2>
+
+<div class="panel">
+  <span class="no">その1</span>
+  <p>アプリを開いて、画面の上のほうにある <span class="btnname">設定</span> を押します。</p>
+</div>
+
+<div class="panel">
+  <span class="no">その2</span>
+  <p><b>締め日</b>を、営業所の締め日に合わせます。</p>
+  <p class="small">このアプリの「1か月」は、締め日から次の締め日までです。</p>
+</div>
+
+<div class="panel">
+  <span class="no">その3</span>
+  <p><b>勤務の種類</b>（日勤・夜勤・隔日勤務）を選んで、<b>売上目標</b>と<b>乗務の回数</b>を入れます。</p>
+  <p class="small">最初は目安の数字が入っています。あとから設定で、いつでも直せます。</p>
+  <div class="hal">
+    <img src="hal-neesan.png" alt="Halねえさん">
+    <div class="bubble">目標は、無理のない数字で大丈夫です。安全帰庫が一番ですよ。</div>
+  </div>
+  <img class="shot" src="shot-settings.png" alt="設定画面：勤務形態、出勤予定日数、乗務時間のリミット、必要な休憩、売上目標、締め日を入れる画面">
+  <p class="small">設定の画面です。最後に <span class="btnname go">保存してホームへ</span> を押してください。</p>
+</div>
+
+<h2 class="sec">2. 出庫から帰庫まで（毎日の使い方）</h2>
+
+<div class="panel">
+  <span class="no">その1</span>
+  <p>出庫のとき、<span class="btnname go">出庫 スタート</span> を押します。</p>
+  <p class="small">Halねえさんが「安全運転で、いってらっしゃい」と挨拶します。画面は10秒で自動でもどります（タップでも、もどります）。</p>
+  <img class="shot" src="shot-home.png" alt="ホーム画面：目標まであと、残り1乗務あたり、1日あたりの3つの数字と、出庫ボタン">
+</div>
+
+<div class="panel">
+  <span class="no">その2</span>
+  <p>休憩のときは <span class="btnname">休憩する</span>、休憩が終わったら <span class="btnname">休憩おわり</span> を押します。</p>
+  <p class="small">休憩の時間は、自動で計算されます。</p>
+</div>
+
+<div class="panel">
+  <span class="no">その3</span>
+  <p>帰庫のとき、<span class="btnname">帰庫</span> を押して、<b>売上</b>を数字で入れます。</p>
+  <p class="small">売上がまだ分からないときは <span class="btnname">あとで</span> を選べます。履歴から、あとで入れられます。</p>
+  <div class="hal">
+    <img src="hal-neesan.png" alt="Halねえさん">
+    <div class="bubble">おつかれさまでした。おかえりなさい。</div>
+  </div>
+</div>
+
+<div class="panel">
+  <span class="no">その4</span>
+  <p>ホーム画面では、いつも3つの数字が見られます。</p>
+  <ul class="tight">
+    <li>目標まであと ○○円</li>
+    <li>残り1乗務あたり ○○円</li>
+    <li>1日あたり ○○時間</li>
+  </ul>
+</div>
+
+<div class="panel caution">
+  <span class="no">押し忘れたら</span>
+  <p>出庫や帰庫を押し忘れても、大丈夫です。<span class="btnname">履歴</span> の画面から <span class="btnname">記録を追加</span> で、あとから入れられます。記録を直したいときは、履歴の記録を押してください。</p>
+  <img class="shot" src="shot-history.png" alt="履歴画面：記録を追加、CSVをコピー、CSVを読み込むのボタン">
+</div>
+
+<h2 class="sec">3. 控え（バックアップ）の取り方</h2>
+
+<div class="panel">
+  <p>記録は、あなたのスマホの中にだけ保存されます。スマホを替えたり、ブラウザのデータが消えたりすると、記録も消えてしまいます。</p>
+  <p><b>「控え」を取っておくと、消えても戻せます。</b></p>
+  <div class="hal">
+    <img src="hal-neesan.png" alt="Halねえさん">
+    <div class="bubble">月に1回でいいので、控えを取ってくださいね。</div>
+  </div>
+</div>
+
+<div class="panel">
+  <span class="no">取り方</span>
+  <p><span class="btnname">設定</span> → <span class="btnname">控えを取る／控えから戻す</span> → <span class="btnname go">控えを作ってコピー</span> を押します。</p>
+  <p>設定と全部の記録が、1つの文字列になります。その文字列を、<b>メールやメモに貼って、アプリの外に保管</b>してください。</p>
+  <p><b>※ 文字列は、最初から最後まで「全部」コピーしてください。</b>途中で切れると、戻せません。</p>
+  <img class="shot" src="shot-backup.png" alt="控えの画面：控えを作ってコピーのボタンと、控えを貼り付ける欄">
+</div>
+
+<div class="panel">
+  <span class="no">戻し方</span>
+  <p>同じ「控え」の画面で、保管しておいた文字列を貼り付けて、<span class="btnname">内容を確認する</span> を押します。</p>
+  <p class="small">戻す前に、記録の件数と期間が表示されます。同じ日付の記録がある日は、上書きせずに飛ばすので、二重にはなりません。</p>
+</div>
+
+<div class="panel caution">
+  <span class="no">控えを取り忘れたら</span>
+  <p>控えがなくても、<span class="btnname">履歴</span> の <span class="btnname">CSVをコピー</span> で書き出したCSVが残っていれば、履歴画面の <span class="btnname">CSVを読み込む</span> から、日付・時刻・売上の一部を戻せます。</p>
+  <p class="small">ただし、設定と休憩の開始・終了は、CSVでは戻りません。完全に戻せるのは「控え」だけです。</p>
+</div>
+
+<footer>
+  <nav>
+    <a href="./">アプリ本体</a>
+    <a href="board.html">掲示板</a>
+    <a href="survey.html">アンケート</a>
+    <a href="https://hal-neesan.github.io/">紹介ページ</a>
+  </nav>
+  <p>Halねえさんの乗務手帳（リサーチ版）— 記録は、あなたの端末の中にだけ保存されます。運営があなたの記録を見ることはありません。</p>
+</footer>
+
+</div>
+</body>
+</html>
